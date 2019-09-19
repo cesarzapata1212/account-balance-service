@@ -1,60 +1,121 @@
 package com.cesarzapata.integration;
 
 import com.cesarzapata.App;
-import com.opentable.db.postgres.embedded.FlywayPreparer;
-import com.opentable.db.postgres.junit.EmbeddedPostgresRules;
-import com.opentable.db.postgres.junit.PreparedDbRule;
-import org.junit.Before;
-import org.junit.Rule;
+import com.cesarzapata.support.AccountBalanceRepository;
+import com.cesarzapata.support.AccountRepository;
+import org.apache.commons.codec.Charsets;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.http.Header;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.util.EntityUtils;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.sql.Connection;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 
-import static org.junit.Assert.assertEquals;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 public class BalanceTransferIntegrationTest {
 
-    @Rule
-    public PreparedDbRule db = EmbeddedPostgresRules.preparedDatabase(
-            FlywayPreparer.forClasspathLocation("database"));
+    private static App app;
 
-    private App app;
-
-    @Before
-    public void setUp() {
+    @BeforeClass
+    public static void setUp() throws IOException {
         app = new App().start();
     }
 
-
-    // set up 2 accounts in the DB
-
-    // set up an HTTP endpoint
-
-    // given account 1 has 1000 balance, and account 2 has 0 (ZERO) balance
-
-    // when I call the endpoint to make a transfer from account 1 to account 2 in the value of 300
-
-    // then account 1 should have remaining balance of 700
-
-    // account 2 should have new balance of 300
+    @Test
+    public void appShouldBeInitialized() {
+        assertNotNull(app);
+    }
 
     @Test
-    public void balanceTransfer() throws SQLException {
-        // create a DB connection
-        // insert test data
+    public void appShouldInitializeDataSource() {
+        assertNotNull(app.dataSource());
+    }
 
-        // start application server
+    @Test
+    public void appShouldReturnPort() {
+        assertThat(app.port(), equalTo(7777));
+    }
 
-        try (Connection conn = db.getTestDatabase().getConnection(); Statement statement = conn.createStatement()) {
+    // set up 2 accounts in the DB
+    // set up an HTTP endpoint
+    // given account 1 has 1000 balance, and account 2 has 0 (ZERO) balance
+    // when I call the endpoint to make a transfer from account 1 to account 2 in the value of 300
+    // then account 1 should have remaining balance of 700
+    // account 2 should have new balance of 300
+    @Test
+    public void balanceTransfer() throws IOException, SQLException {
+        // GIVEN
+        AccountRepository accountRepository = new AccountRepository(app.dataSource());
+        AccountBalanceRepository accountBalanceRepository = new AccountBalanceRepository(app.dataSource());
 
-            statement.execute("INSERT INTO account_balance VALUES ('111111', '11111111', 1000.0)");
+        String sourceAccountNumber = RandomStringUtils.randomNumeric(8);
+        String sourceSortCode = RandomStringUtils.randomNumeric(6);
+        accountRepository.insert(sourceAccountNumber, sourceSortCode);
+        accountBalanceRepository.insert(sourceAccountNumber, sourceSortCode, new BigDecimal("1000.00"));
 
-            ResultSet rs = statement.executeQuery("select * from account_balance");
-            rs.next();
-            assertEquals("1000.00", rs.getString("available_balance"));
-        }
+        String destinationAccountNumber = RandomStringUtils.randomNumeric(8);
+        String destinationSortCode = RandomStringUtils.randomNumeric(6);
+        accountRepository.insert(destinationAccountNumber, destinationSortCode);
+        accountBalanceRepository.insert(destinationAccountNumber, destinationSortCode, BigDecimal.ZERO);
+
+        // WHEN
+        CloseableHttpClient httpClient = HttpClientBuilder.create().build();
+        HttpPost post = new HttpPost("http://localhost:" + app.port() + "/balance-transfer");
+        post.setHeader("Accept", "application/json");
+
+
+        StringEntity requestEntity = new StringEntity(
+                String.format("{" +
+                                "\"sourceAccount\":{\"accountNumber\":\"%s\",\"sortCode\":\"%s\"}," +
+                                "\"destinationAccount\":{\"accountNumber\":\"%s\",\"sortCode\":\"%s\"}," +
+                                "\"amount\":%s" +
+                                "}",
+                        sourceAccountNumber,
+                        sourceSortCode,
+                        destinationAccountNumber,
+                        destinationSortCode,
+                        "700"
+                ),
+                ContentType.APPLICATION_JSON);
+        post.setEntity(requestEntity);
+        HttpResponse response = httpClient.execute(post);
+        HttpEntity entity = response.getEntity();
+        Header encodingHeader = entity.getContentEncoding();
+        Charset encoding = encodingHeader == null ? StandardCharsets.UTF_8 : Charsets.toCharset(encodingHeader.getValue());
+        String json = EntityUtils.toString(entity, StandardCharsets.UTF_8);
+
+        // THEN
+        assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
+//        assertThat(json, equalTo("{}"));
+
+        ResultSet sourceAccountBalance = accountBalanceRepository.select(sourceAccountNumber, sourceSortCode);
+        ResultSet destinationAccountBalance = accountBalanceRepository.select(destinationAccountNumber, destinationSortCode);
+
+        assertTrue(sourceAccountBalance.next());
+        assertThat(sourceAccountBalance.getBigDecimal("account_balance"), equalTo(new BigDecimal("300")));
+        assertFalse(sourceAccountBalance.next());
+
+        assertTrue(destinationAccountBalance.next());
+        assertThat(destinationAccountBalance.getBigDecimal("account_balance"), equalTo(new BigDecimal("700")));
+        assertFalse(destinationAccountBalance.next());
     }
 }
+

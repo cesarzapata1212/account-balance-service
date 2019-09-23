@@ -21,6 +21,8 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -35,7 +37,7 @@ public class BalanceTransferIntegrationTest {
     private static App app;
 
     @BeforeClass
-    public static void setUp() throws IOException {
+    public static void setUp() throws IOException, SQLException {
         app = new App().start();
     }
 
@@ -102,20 +104,33 @@ public class BalanceTransferIntegrationTest {
         Charset encoding = encodingHeader == null ? StandardCharsets.UTF_8 : Charsets.toCharset(encodingHeader.getValue());
         String json = EntityUtils.toString(entity, StandardCharsets.UTF_8);
 
+        System.out.println(json);
         // THEN
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
-//        assertThat(json, equalTo("{}"));
 
-        ResultSet sourceAccountBalance = accountBalanceRepository.select(sourceAccountNumber, sourceSortCode);
-        ResultSet destinationAccountBalance = accountBalanceRepository.select(destinationAccountNumber, destinationSortCode);
+        String statement = "SELECT account_number, sort_code, available_balance " +
+                "FROM account_balance " +
+                "WHERE account_number = ? " +
+                "AND sort_code = ?";
 
-        assertTrue(sourceAccountBalance.next());
-        assertThat(sourceAccountBalance.getBigDecimal("account_balance"), equalTo(new BigDecimal("300")));
-        assertFalse(sourceAccountBalance.next());
+        try (Connection conn = app.dataSource().getConnection()) {
+            PreparedStatement stmt = conn.prepareStatement(statement);
+            stmt.setString(1, sourceAccountNumber);
+            stmt.setString(2, sourceSortCode);
+            ResultSet sourceAccountBalance = stmt.executeQuery();
 
-        assertTrue(destinationAccountBalance.next());
-        assertThat(destinationAccountBalance.getBigDecimal("account_balance"), equalTo(new BigDecimal("700")));
-        assertFalse(destinationAccountBalance.next());
+            stmt.setString(1, destinationAccountNumber);
+            stmt.setString(2, destinationSortCode);
+            ResultSet destinationAccountBalance = stmt.executeQuery();
+
+            assertTrue(sourceAccountBalance.next());
+            assertThat(sourceAccountBalance.getBigDecimal("available_balance"), equalTo(new BigDecimal("300")));
+            assertFalse(sourceAccountBalance.next());
+
+            assertTrue(destinationAccountBalance.next());
+            assertThat(destinationAccountBalance.getBigDecimal("available_balance"), equalTo(new BigDecimal("700")));
+            assertFalse(destinationAccountBalance.next());
+        }
     }
 }
 

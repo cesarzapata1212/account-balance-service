@@ -1,5 +1,6 @@
-CREATE TABLE account (sort_code varchar NOT NULL,
+CREATE TABLE account (
 account_number varchar NOT NULL,
+sort_code varchar NOT NULL,
 CONSTRAINT account_pk PRIMARY KEY (sort_code, account_number)) ;
 
 CREATE TABLE account_balance (account_number varchar NOT NULL,

@@ -2,8 +2,11 @@ package com.cesarzapata;
 
 public class BalanceTransferResult {
 
-    private final Account destinationAccount;
+    private Account destinationAccount;
     private Account sourceAccount;
+
+    public BalanceTransferResult() {
+    }
 
     public BalanceTransferResult(Account sourceAccount, Account destinationAccount) {
         this.sourceAccount = sourceAccount;

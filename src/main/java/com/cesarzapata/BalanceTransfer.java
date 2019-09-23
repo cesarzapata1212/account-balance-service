@@ -1,26 +1,32 @@
 package com.cesarzapata;
 
-public class BalanceTransfer {
-    private final Account sourceAccount;
-    private final Account destinationAccount;
-    private final Money amount;
+import org.jetbrains.annotations.NotNull;
 
-    public BalanceTransfer(Account sourceAccount, Account destinationAccount, Money amount) {
-        this.sourceAccount = sourceAccount;
-        this.destinationAccount = destinationAccount;
-        this.amount = amount;
+public class BalanceTransfer {
+
+    private Accounts accounts;
+
+    public BalanceTransfer(Accounts accounts) {
+        this.accounts = accounts;
     }
 
-    public BalanceTransferResult transfer() {
-        return new BalanceTransferResult(
-                new Account(
-                        sourceAccount,
-                        sourceAccount.balance().minus(amount)
-                ),
-                new Account(
-                        destinationAccount,
-                        destinationAccount.balance().plus(amount)
-                )
+    public BalanceTransferResult transfer(@NotNull BalanceTransferRequest request) {
+        Account sourceAccount = findAccount(request.getSourceAccount());
+        Account destinationAccount = findAccount(request.getDestinationAccount());
+        Money transferAmount = new Money(request.getAmount());
+
+        BalanceTransferResult result = new BalanceTransferResult(
+                new Account(sourceAccount, sourceAccount.balance().minus(transferAmount)),
+                new Account(destinationAccount, destinationAccount.balance().plus(transferAmount))
         );
+
+        accounts.update(result.sourceAccount());
+        accounts.update(result.destinationAccount());
+
+        return result;
+    }
+
+    private Account findAccount(BalanceTransferRequest.Account account) {
+        return accounts.find(account.getAccountNumber(), account.getSortCode());
     }
 }

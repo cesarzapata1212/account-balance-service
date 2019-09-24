@@ -2,17 +2,23 @@ package com.cesarzapata;
 
 import org.junit.Test;
 
+import java.math.BigDecimal;
+
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
 
 public class MoneyTest {
 
     @Test
     public void equality() {
-        assertTrue(new Money("100").equals(new Money("100")));
-        assertFalse(new Money("100").equals(new Money("90")));
+        assertEquals(new Money("100"), new Money("100"));
+        assertEquals(new Money("100.00"), new Money("100"));
+        assertNotEquals(new Money("100"), new Money("90"));
+        assertNotEquals(new Money("100.01"), new Money("100.00"));
+        assertEquals(new Money(BigDecimal.ONE), new Money("1"));
+        assertEquals(new Money(new BigDecimal("100.00")), new Money("100"));
     }
 
     @Test

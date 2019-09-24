@@ -25,7 +25,7 @@ public class BalanceTransferTest {
     }
 
     @Test
-    public void balanceTransfer() {
+    public void should_make_balance_transfer() {
         BalanceTransferResult result = new BalanceTransfer(fakeAccounts).transfer(
                 new BalanceTransferRequest(
                         new BalanceTransferRequest.Account(sourceAccount.accountNumber(), sourceAccount.sortCode()),
@@ -35,10 +35,8 @@ public class BalanceTransferTest {
 
         assertThat(result.sourceAccount(), equalTo(new Account(sourceAccount.accountNumber(), sourceAccount.sortCode(), new Money("725"))));
         assertThat(result.destinationAccount(), equalTo(new Account(destinationAccount.accountNumber(), destinationAccount.sortCode(), new Money("275"))));
-
         assertThat(result.sourceAccount(), equalTo(fakeAccounts.find(sourceAccount.accountNumber(), sourceAccount.sortCode())));
         assertThat(result.destinationAccount(), equalTo(fakeAccounts.find(destinationAccount.accountNumber(), destinationAccount.sortCode())));
     }
-
 
 }

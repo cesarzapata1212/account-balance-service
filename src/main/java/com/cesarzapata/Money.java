@@ -38,7 +38,7 @@ public class Money {
         if (this == o) return true;
         if (!(o instanceof Money)) return false;
         Money money = (Money) o;
-        return value.equals(money.value);
+        return value.compareTo(money.value) == 0;
     }
 
     @Override

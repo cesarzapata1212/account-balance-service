@@ -1,15 +1,18 @@
 package com.cesarzapata;
 
+import com.cesarzapata.support.AccountBalanceRepository;
+import com.cesarzapata.support.AccountRepository;
 import com.opentable.db.postgres.embedded.FlywayPreparer;
 import com.opentable.db.postgres.junit.EmbeddedPostgresRules;
 import com.opentable.db.postgres.junit.PreparedDbRule;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
 import javax.sql.DataSource;
-import java.sql.Connection;
+import java.math.BigDecimal;
 import java.sql.SQLException;
-import java.sql.Statement;
+import java.util.List;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
@@ -18,22 +21,56 @@ public class AccountsImplTest {
 
     @Rule
     public PreparedDbRule db = EmbeddedPostgresRules.preparedDatabase(FlywayPreparer.forClasspathLocation("database"));
+    private DataSource dataSource;
+    private AccountRepository accountRepository;
+    private AccountBalanceRepository accountBalanceRepository;
 
-    @Test
-    public void should_find_existing_account() throws SQLException {
-        DataSource dataSource = db.getTestDatabase();
-        try (Connection conn = dataSource.getConnection();
-             Statement stmt = conn.createStatement()) {
-            stmt.execute("insert into account (account_number, sort_code) " +
-                    " VALUES ('00001111','000111')");
-        }
-
-        Account account = new AccountsImpl(dataSource).find("00001111", "000111");
-
-        assertThat(account, equalTo(new Account("00001111", "000111")));
+    @Before
+    public void setUp() {
+        dataSource = db.getTestDatabase();
+        accountRepository = new AccountRepository(dataSource);
+        accountBalanceRepository = new AccountBalanceRepository(dataSource);
     }
 
     @Test
-    public void update() {
+    public void should_fetch_account_and_set_balance_to_zero() throws SQLException {
+        String accountNumber = "00001111";
+        String sortCode = "000111";
+        accountRepository.insert(accountNumber, sortCode);
+
+        Account account = new AccountsImpl(dataSource).find(accountNumber, sortCode);
+
+        assertThat(account, equalTo(new Account(accountNumber, sortCode, new Money("0.00"))));
+    }
+
+    @Test
+    public void should_fetch_account_with_balance() throws SQLException {
+        String accountNumber = "00001111";
+        String sortCode = "0001111";
+        BigDecimal balance = new BigDecimal("1000");
+        accountRepository.insert(accountNumber, sortCode);
+        accountBalanceRepository.insert(accountNumber, sortCode, balance);
+
+        Account result = new AccountsImpl(dataSource).find(accountNumber, sortCode);
+
+        assertThat(result, equalTo(new Account(accountNumber, sortCode, new Money(balance))));
+    }
+
+    @Test
+    public void should_update_account() throws SQLException {
+        String accountNumber = "00001111";
+        String sortCode = "000111";
+        accountRepository.insert(accountNumber, sortCode);
+        accountBalanceRepository.insert(accountNumber, sortCode, BigDecimal.ZERO);
+
+        new AccountsImpl(dataSource).update(new Account(accountNumber, sortCode, new Money("100")));
+
+        List<String[]> rows = accountBalanceRepository.select(accountNumber, sortCode);
+
+        assertThat(rows.size(), equalTo(1));
+        String[] row = rows.get(0);
+        assertThat(row[0], equalTo(accountNumber));
+        assertThat(row[1], equalTo(sortCode));
+        assertThat(row[2], equalTo("100.00"));
     }
 }

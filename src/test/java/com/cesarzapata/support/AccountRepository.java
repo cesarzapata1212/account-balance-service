@@ -6,7 +6,6 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 public class AccountRepository {
-    private static final String INSERT_STATEMENT = "INSERT INTO account (account_number, sort_code) VALUES (?, ?)";
     private final DataSource dataSource;
 
     public AccountRepository(DataSource dataSource) {
@@ -14,8 +13,9 @@ public class AccountRepository {
     }
 
     public void insert(String accountNumber, String sortCode) throws SQLException {
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement s = conn.prepareStatement(INSERT_STATEMENT)) {
+        String stmt = "INSERT INTO account (account_number, sort_code) VALUES (?, ?)";
+        try (Connection conn = dataSource.getConnection()) {
+            PreparedStatement s = conn.prepareStatement(stmt);
             s.setString(1, accountNumber);
             s.setString(2, sortCode);
             s.execute();

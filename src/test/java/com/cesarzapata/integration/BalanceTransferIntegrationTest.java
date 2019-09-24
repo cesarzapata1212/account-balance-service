@@ -114,21 +114,22 @@ public class BalanceTransferIntegrationTest {
                 "AND sort_code = ?";
 
         try (Connection conn = app.dataSource().getConnection()) {
-            PreparedStatement stmt = conn.prepareStatement(statement);
-            stmt.setString(1, sourceAccountNumber);
-            stmt.setString(2, sourceSortCode);
-            ResultSet sourceAccountBalance = stmt.executeQuery();
+            PreparedStatement sourceStmt = conn.prepareStatement(statement);
+            sourceStmt.setString(1, sourceAccountNumber);
+            sourceStmt.setString(2, sourceSortCode);
+            ResultSet sourceAccountBalance = sourceStmt.executeQuery();
 
-            stmt.setString(1, destinationAccountNumber);
-            stmt.setString(2, destinationSortCode);
-            ResultSet destinationAccountBalance = stmt.executeQuery();
+            PreparedStatement destinationStmt = conn.prepareStatement(statement);
+            destinationStmt.setString(1, destinationAccountNumber);
+            destinationStmt.setString(2, destinationSortCode);
+            ResultSet destinationAccountBalance = destinationStmt.executeQuery();
 
             assertTrue(sourceAccountBalance.next());
-            assertThat(sourceAccountBalance.getBigDecimal("available_balance"), equalTo(new BigDecimal("300")));
+            assertThat(sourceAccountBalance.getString("available_balance"), equalTo("300.00"));
             assertFalse(sourceAccountBalance.next());
 
             assertTrue(destinationAccountBalance.next());
-            assertThat(destinationAccountBalance.getBigDecimal("available_balance"), equalTo(new BigDecimal("700")));
+            assertThat(destinationAccountBalance.getString("available_balance"), equalTo("700.00"));
             assertFalse(destinationAccountBalance.next());
         }
     }

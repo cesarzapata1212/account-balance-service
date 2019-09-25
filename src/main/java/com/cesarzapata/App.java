@@ -17,28 +17,38 @@ public class App {
 
     private DataSource dataSource;
     private Javalin server;
+    private ObjectMapper om = new ObjectMapper().setVisibility(PropertyAccessor.FIELD, Visibility.ANY);
 
     public App start() throws SQLException {
         App app = new App();
-
-        // Database
-        DatabasePreparer preparer = FlywayPreparer.forClasspathLocation("database");
-        PreparedDbProvider provider = PreparedDbProvider.forPreparer(preparer);
-        app.dataSource = provider.createDataSource();
-
-        // SERVER
-        app.server = Javalin.create().start(port());
-
-        JavalinJackson.configure(new ObjectMapper().setVisibility(PropertyAccessor.FIELD, Visibility.ANY));
-        app.server.post("/balance-transfer", new BalanceTransferHandler(app.dataSource));
+        initDb(app);
+        initServer(app);
         return app;
     }
 
     public DataSource dataSource() {
+        if (dataSource == null) {
+            throw new IllegalStateException("DataSource has not been initialized");
+        }
         return dataSource;
     }
 
-    public Integer port() {
-        return 7777;
+    public int port() {
+        if (server == null) {
+            throw new IllegalStateException("Server has not been initialized");
+        }
+        return server.port();
+    }
+
+    private void initServer(App app) {
+        app.server = Javalin.create().start();
+        JavalinJackson.configure(om);
+        app.server.post("/balance-transfer", new BalanceTransferHandler(app.dataSource));
+    }
+
+    private void initDb(App app) throws SQLException {
+        DatabasePreparer preparer = FlywayPreparer.forClasspathLocation("database");
+        PreparedDbProvider provider = PreparedDbProvider.forPreparer(preparer);
+        app.dataSource = provider.createDataSource();
     }
 }

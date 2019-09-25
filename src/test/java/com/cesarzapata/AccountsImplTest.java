@@ -12,7 +12,6 @@ import org.junit.Test;
 import javax.sql.DataSource;
 import java.math.BigDecimal;
 import java.sql.SQLException;
-import java.util.List;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
@@ -70,12 +69,6 @@ public class AccountsImplTest {
 
         new AccountsImpl(dataSource).update(new Account(accountNumber, sortCode, new Money("100")));
 
-        List<String[]> rows = accountBalanceRepository.select(accountNumber, sortCode);
-
-        assertThat(rows.size(), equalTo(1));
-        String[] row = rows.get(0);
-        assertThat(row[0], equalTo(accountNumber));
-        assertThat(row[1], equalTo(sortCode));
-        assertThat(row[2], equalTo("100.00"));
+        assertThat(accountBalanceRepository.selectBalance(accountNumber, sortCode), equalTo("100.00"));
     }
 }

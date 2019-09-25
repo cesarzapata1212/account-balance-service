@@ -1,8 +1,9 @@
 package com.cesarzapata.support;
 
+import com.jcabi.jdbc.JdbcSession;
+import com.jcabi.jdbc.Outcome;
+
 import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 public class AccountRepository {
@@ -13,12 +14,12 @@ public class AccountRepository {
     }
 
     public void insert(String accountNumber, String sortCode) throws SQLException {
-        String stmt = "INSERT INTO account (account_number, sort_code) VALUES (?, ?)";
-        try (Connection conn = dataSource.getConnection()) {
-            PreparedStatement s = conn.prepareStatement(stmt);
-            s.setString(1, accountNumber);
-            s.setString(2, sortCode);
-            s.execute();
+        Integer count = new JdbcSession(dataSource).sql("INSERT INTO account (account_number, sort_code) VALUES (?, ?)")
+                .set(accountNumber)
+                .set(sortCode)
+                .insert(Outcome.UPDATE_COUNT);
+        if (count == 0) {
+            throw new SQLException("Insert failed");
         }
     }
 }

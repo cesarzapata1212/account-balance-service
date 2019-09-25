@@ -44,7 +44,7 @@ public class BalanceTransferRequest {
      * used to parse the JSON request. It could be extracted to a separate file
      * if inner classes were undesired by the team.
      */
-    static class Account {
+    public static class Account {
 
         private String accountNumber;
         private String sortCode;

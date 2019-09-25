@@ -20,7 +20,7 @@ public class FakeAccountRepository implements Accounts {
         return accounts.stream()
                 .filter(account -> account.accountNumber().equals(accountNumber) && account.sortCode().equals(sortCode))
                 .findFirst()
-                .orElseThrow(new AccountNotFoundException(accountNumber, sortCode));
+                .orElseThrow(() -> new AccountNotFoundException(accountNumber, sortCode));
     }
 
     @Override

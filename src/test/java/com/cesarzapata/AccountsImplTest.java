@@ -56,6 +56,11 @@ public class AccountsImplTest {
         assertThat(result, equalTo(new Account(accountNumber, sortCode, new Money(balance))));
     }
 
+    @Test(expected = AccountNotFoundException.class)
+    public void should_fail_if_account_not_found() {
+        new AccountsImpl(dataSource).find("000", "000");
+    }
+
     @Test
     public void should_update_account() throws SQLException {
         String accountNumber = "00001111";

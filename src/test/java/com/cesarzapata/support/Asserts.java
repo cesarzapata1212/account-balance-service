@@ -9,7 +9,7 @@ public class Asserts {
     public static void assertThrows(Class e, Callable fun) {
         try {
             fun.call();
-            fail("Expected expection: " + e.getName() + " but none was thrown");
+            fail("Expected exception: " + e.getName() + " but none was thrown");
         } catch (Exception inner) {
             if (!inner.getClass().equals(e)) {
                 fail("Expected: " + e.getName() + " but got: " + inner.getClass().getName());

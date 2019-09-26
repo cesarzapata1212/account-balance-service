@@ -23,7 +23,7 @@ public class AccountBalanceRepository {
                 .set(availableBalance)
                 .insert(Outcome.UPDATE_COUNT);
         if (count == 0) {
-            throw new SQLException("Insert failed");
+            throw new SQLException("INSERT failed");
         }
     }
 

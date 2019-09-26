@@ -19,7 +19,7 @@ public class AccountRepository {
                 .set(sortCode)
                 .insert(Outcome.UPDATE_COUNT);
         if (count == 0) {
-            throw new SQLException("Insert failed");
+            throw new SQLException("INSERT failed");
         }
     }
 }

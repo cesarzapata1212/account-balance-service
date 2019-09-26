@@ -16,8 +16,8 @@ public class BalanceTransfer {
         Money transferAmount = new Money(request.getAmount());
 
         BalanceTransferResult result = new BalanceTransferResult(
-                new Account(sourceAccount, sourceAccount.balance().minus(transferAmount)),
-                new Account(destinationAccount, destinationAccount.balance().plus(transferAmount))
+                sourceAccount.balance(sourceAccount.balance().minus(transferAmount)),
+                destinationAccount.balance(destinationAccount.balance().plus(transferAmount))
         );
 
         accounts.update(result.sourceAccount());

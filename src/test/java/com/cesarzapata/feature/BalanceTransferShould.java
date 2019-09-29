@@ -5,22 +5,21 @@ import com.cesarzapata.BalanceTransferRequest;
 import com.cesarzapata.BalanceTransferRequest.Account;
 import com.cesarzapata.support.AccountBalanceRepository;
 import com.cesarzapata.support.AccountRepository;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
+import io.restassured.RestAssured;
+import io.restassured.http.ContentType;
+import io.restassured.response.ValidatableResponse;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.SQLException;
 
+import static io.restassured.RestAssured.given;
+import static io.restassured.config.JsonConfig.jsonConfig;
+import static io.restassured.path.json.config.JsonPathConfig.NumberReturnType.BIG_DECIMAL;
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
 public class BalanceTransferShould {
@@ -30,7 +29,7 @@ public class BalanceTransferShould {
     private AccountBalanceRepository accountBalanceRepository;
 
     @BeforeClass
-    public static void beforeClass() throws SQLException {
+    public static void beforeClass() throws Exception {
         app = new App().start();
     }
 
@@ -41,7 +40,7 @@ public class BalanceTransferShould {
     }
 
     @Test
-    public void transfer_balance() throws IOException, SQLException {
+    public void transfer_balance() throws Exception {
         // GIVEN
         BalanceTransferRequest req = new BalanceTransferRequest(
                 new Account("11114444", "111444"),
@@ -52,26 +51,25 @@ public class BalanceTransferShould {
         createAccount(req.getDestinationAccount(), BigDecimal.ZERO);
 
         // WHEN
-        CloseableHttpResponse response = makeBalanceTransferHttpRequest(req);
+        ValidatableResponse response = given().config((RestAssured.config().jsonConfig(jsonConfig().numberReturnType(BIG_DECIMAL))))
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON.getAcceptHeader())
+                .body(req)
+                .port(app.port())
+                .when().post("/balance-transfer")
+                .then();
 
         // THEN
-        assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
-        assertThat(accountBalanceRepository.selectBalance(
-                req.getSourceAccount().getAccountNumber(),
-                req.getSourceAccount().getSortCode()), equalTo("300.00"));
+        response.statusCode(200)
+                .body("sourceAccount.accountNumber", is("11114444"))
+                .body("sourceAccount.sortCode", is("111444"))
+                .body("sourceAccount.balance.value", is(new BigDecimal("300.00")))
+                .body("destinationAccount.accountNumber", is("22225555"))
+                .body("destinationAccount.sortCode", is("222555"))
+                .body("destinationAccount.balance.value", is(new BigDecimal("700.00")));
 
-        assertThat(accountBalanceRepository.selectBalance(
-                req.getDestinationAccount().getAccountNumber(),
-                req.getDestinationAccount().getSortCode()), equalTo("700.00"));
-    }
-
-    private CloseableHttpResponse makeBalanceTransferHttpRequest(BalanceTransferRequest req) throws IOException {
-        CloseableHttpClient httpClient = HttpClientBuilder.create().build();
-        HttpPost post = new HttpPost("http://localhost:" + app.port() + "/balance-transfer");
-        post.setHeader("Accept", "application/json");
-        StringEntity requestEntity = new StringEntity(new ObjectMapper().writeValueAsString(req), ContentType.APPLICATION_JSON);
-        post.setEntity(requestEntity);
-        return httpClient.execute(post);
+        assertThat(accountBalanceRepository.selectBalance("11114444", "111444"), equalTo("300.00"));
+        assertThat(accountBalanceRepository.selectBalance("22225555", "222555"), equalTo("700.00"));
     }
 
     private void createAccount(Account account, BigDecimal balance) throws SQLException {

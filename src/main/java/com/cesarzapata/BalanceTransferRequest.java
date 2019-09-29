@@ -39,11 +39,6 @@ public class BalanceTransferRequest {
         this.amount = amount;
     }
 
-    /**
-     * This class is used as an inner class because it's just a data class
-     * used to parse the JSON request. It could be extracted to a separate file
-     * if inner classes were undesired by the team.
-     */
     public static class Account {
 
         private String accountNumber;

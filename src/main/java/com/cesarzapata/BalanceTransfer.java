@@ -4,7 +4,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class BalanceTransfer {
 
-    private Accounts accounts;
+    private final Accounts accounts;
 
     public BalanceTransfer(Accounts accounts) {
         this.accounts = accounts;

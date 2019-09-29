@@ -47,6 +47,7 @@ public class App {
         JavalinJackson.configure(DEFAULT_MAPPER);
         app.server.post("/balance-transfer", new BalanceTransferHandler(app.dataSource));
         app.server.exception(BusinessOperationException.class, new UnprocessableEntityExceptionHandler());
+        app.server.exception(AccountNotFoundException.class, new UnprocessableEntityExceptionHandler());
     }
 
     private void initDb(App app) throws SQLException {

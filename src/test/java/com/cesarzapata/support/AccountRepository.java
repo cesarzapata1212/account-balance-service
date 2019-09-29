@@ -2,6 +2,7 @@ package com.cesarzapata.support;
 
 import com.jcabi.jdbc.JdbcSession;
 import com.jcabi.jdbc.Outcome;
+import com.jcabi.jdbc.SingleOutcome;
 
 import javax.sql.DataSource;
 import java.sql.SQLException;
@@ -21,5 +22,13 @@ public class AccountRepository {
         if (count == 0) {
             throw new SQLException("INSERT failed");
         }
+    }
+
+    public boolean exists(String accountNumber, String sortCode) throws SQLException {
+        Long count = new JdbcSession(dataSource).sql("SELECT COUNT(1) FROM account WHERE account_number = ? AND sort_code = ?")
+                .set(accountNumber)
+                .set(sortCode)
+                .select(new SingleOutcome<>(Long.class));
+        return count > 0;
     }
 }

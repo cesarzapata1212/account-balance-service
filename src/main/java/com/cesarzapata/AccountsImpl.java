@@ -1,7 +1,6 @@
 package com.cesarzapata;
 
 import com.jcabi.jdbc.JdbcSession;
-import com.jcabi.jdbc.Outcome;
 
 import javax.sql.DataSource;
 import java.sql.SQLException;
@@ -31,16 +30,15 @@ public class AccountsImpl implements Accounts {
     @Override
     public void update(Account account) throws AccountNotFoundException {
         String sql = "UPDATE account_balance SET available_balance = ? WHERE account_number = ? AND sort_code = ?";
-
+        Account a = find(account.accountNumber(), account.sortCode());
         try {
             new JdbcSession(dataSource).sql(sql)
                     .set(account.balance().value())
-                    .set(account.accountNumber())
-                    .set(account.sortCode())
-                    .update(Outcome.VOID);
+                    .set(a.accountNumber())
+                    .set(a.sortCode())
+                    .update(new UpdateOutcome());
         } catch (SQLException e) {
-            e.printStackTrace();
-            throw new IllegalArgumentException();
+            throw new AccountNotFoundException(a.accountNumber(), a.sortCode(), e);
         }
     }
 }

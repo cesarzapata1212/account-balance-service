@@ -25,6 +25,7 @@ import static io.restassured.path.json.config.JsonPathConfig.NumberReturnType.BI
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assume.assumeFalse;
 
 public class BalanceTransferShould {
 
@@ -113,8 +114,29 @@ public class BalanceTransferShould {
     }
 
     @Test
-    public void account_not_found() {
+    public void account_not_found() throws Exception {
+        // GIVEN
+        assumeFalse(accountRepository.exists("00000000", "000000"));
 
+        BalanceTransferRequest req = new BalanceTransferRequest(
+                new Account("00000000", "000000"),
+                new Account("88887777", "888777"),
+                "1000"
+        );
+
+        // WHEN
+        ValidatableResponse response = given().config((RestAssured.config().jsonConfig(jsonConfig().numberReturnType(BIG_DECIMAL))))
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON.getAcceptHeader())
+                .body(req)
+                .port(app.port())
+                .when().post("/balance-transfer")
+                .then();
+
+        // THEN
+        response.statusCode(HttpStatus.SC_UNPROCESSABLE_ENTITY)
+                .body("status", is(422))
+                .body("message", is("ACCOUNT_NOT_FOUND"));
     }
 
     private void createAccount(Account account, BigDecimal balance) throws SQLException {

@@ -5,13 +5,13 @@ public class AccountNotFoundException extends RuntimeException {
     private final String sortCode;
 
     public AccountNotFoundException(String accountNumber, String sortCode) {
-        super();
+        super("ACCOUNT_NOT_FOUND");
         this.accountNumber = accountNumber;
         this.sortCode = sortCode;
     }
 
     public AccountNotFoundException(String accountNumber, String sortCode, Exception e) {
-        super(e);
+        super("ACCOUNT_NOT_FOUND", e);
         this.accountNumber = accountNumber;
         this.sortCode = sortCode;
     }

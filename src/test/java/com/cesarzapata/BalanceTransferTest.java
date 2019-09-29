@@ -61,4 +61,17 @@ public class BalanceTransferTest {
                         "1"
                 ));
     }
+
+    @Test
+    public void validate_transfer_to_same_account() {
+        thrown.expect(BusinessOperationException.class);
+        thrown.expectMessage("TRANSFER_TO_SAME_ACCOUNT");
+        new BalanceTransfer(fakeAccounts).transfer(
+                new BalanceTransferRequest(
+                        new BalanceTransferRequest.Account(sourceAccount.accountNumber(), sourceAccount.sortCode()),
+                        new BalanceTransferRequest.Account(sourceAccount.accountNumber(), sourceAccount.sortCode()),
+                        "10"
+                )
+        );
+    }
 }

@@ -63,13 +63,7 @@ public class BalanceTransferShould {
         createAccount(req.getDestinationAccount(), BigDecimal.ZERO);
 
         // WHEN
-        ValidatableResponse response = given().config((RestAssured.config().jsonConfig(jsonConfig().numberReturnType(BIG_DECIMAL))))
-                .contentType(ContentType.JSON)
-                .accept(ContentType.JSON.getAcceptHeader())
-                .body(req)
-                .port(app.port())
-                .when().post("/balance-transfer")
-                .then();
+        ValidatableResponse response = doPost(req);
 
         // THEN
         response.statusCode(HttpStatus.SC_OK)
@@ -96,13 +90,7 @@ public class BalanceTransferShould {
         createAccount(req.getDestinationAccount(), BigDecimal.ZERO);
 
         // WHEN
-        ValidatableResponse response = given().config((RestAssured.config().jsonConfig(jsonConfig().numberReturnType(BIG_DECIMAL))))
-                .contentType(ContentType.JSON)
-                .accept(ContentType.JSON.getAcceptHeader())
-                .body(req)
-                .port(app.port())
-                .when().post("/balance-transfer")
-                .then();
+        ValidatableResponse response = doPost(req);
 
         // THEN
         response.statusCode(HttpStatus.SC_UNPROCESSABLE_ENTITY)
@@ -125,18 +113,42 @@ public class BalanceTransferShould {
         );
 
         // WHEN
-        ValidatableResponse response = given().config((RestAssured.config().jsonConfig(jsonConfig().numberReturnType(BIG_DECIMAL))))
+        ValidatableResponse response = doPost(req);
+
+        // THEN
+        response.statusCode(HttpStatus.SC_UNPROCESSABLE_ENTITY)
+                .body("status", is(422))
+                .body("message", is("ACCOUNT_NOT_FOUND"));
+    }
+
+
+    @Test
+    public void transfer_between_same_account() throws Exception {
+        // GIVEN
+        BalanceTransferRequest req = new BalanceTransferRequest(
+                new Account("11112222", "111122"),
+                new Account("11112222", "111122"),
+                "100"
+        );
+        createAccount(req.getSourceAccount(), new BigDecimal("100.50"));
+
+        // WHEN
+        ValidatableResponse response = doPost(req);
+
+        // THEN
+        response.statusCode(HttpStatus.SC_UNPROCESSABLE_ENTITY)
+                .body("status", is(422))
+                .body("message", is("TRANSFER_TO_SAME_ACCOUNT"));
+    }
+
+    private ValidatableResponse doPost(BalanceTransferRequest req) {
+        return given().config((RestAssured.config().jsonConfig(jsonConfig().numberReturnType(BIG_DECIMAL))))
                 .contentType(ContentType.JSON)
                 .accept(ContentType.JSON.getAcceptHeader())
                 .body(req)
                 .port(app.port())
                 .when().post("/balance-transfer")
                 .then();
-
-        // THEN
-        response.statusCode(HttpStatus.SC_UNPROCESSABLE_ENTITY)
-                .body("status", is(422))
-                .body("message", is("ACCOUNT_NOT_FOUND"));
     }
 
     private void createAccount(Account account, BigDecimal balance) throws SQLException {

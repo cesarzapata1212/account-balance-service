@@ -1,5 +1,7 @@
 package com.cesarzapata;
 
+import java.util.Objects;
+
 public class BalanceTransferRequest {
 
     private Account sourceAccount;
@@ -66,6 +68,20 @@ public class BalanceTransferRequest {
 
         public void setSortCode(String sortCode) {
             this.sortCode = sortCode;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof Account)) return false;
+            Account account = (Account) o;
+            return accountNumber.equals(account.accountNumber) &&
+                    sortCode.equals(account.sortCode);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(accountNumber, sortCode);
         }
     }
 

@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.opentable.db.postgres.embedded.DatabasePreparer;
 import com.opentable.db.postgres.embedded.FlywayPreparer;
-import com.opentable.db.postgres.embedded.PreparedDbProvider;
 import io.javalin.Javalin;
 import io.javalin.plugin.json.JavalinJackson;
 
@@ -15,15 +14,19 @@ import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 
 public class App {
 
+    private static final ObjectMapper DEFAULT_MAPPER = new ObjectMapper().setVisibility(PropertyAccessor.FIELD, Visibility.ANY);
     private DataSource dataSource;
     private Javalin server;
-    private ObjectMapper om = new ObjectMapper().setVisibility(PropertyAccessor.FIELD, Visibility.ANY);
+
+    public App(Javalin server, DataSource dataSource) {
+        this.server = server;
+        this.dataSource = dataSource;
+    }
 
     public App start() throws SQLException {
-        App app = new App();
-        initDb(app);
-        initServer(app);
-        return app;
+        initDb(this);
+        initServer(this);
+        return this;
     }
 
     public DataSource dataSource() {
@@ -41,14 +44,13 @@ public class App {
     }
 
     private void initServer(App app) {
-        app.server = Javalin.create().start();
-        JavalinJackson.configure(om);
+        JavalinJackson.configure(DEFAULT_MAPPER);
         app.server.post("/balance-transfer", new BalanceTransferHandler(app.dataSource));
+        app.server.exception(BusinessOperationException.class, new UnprocessableEntityExceptionHandler());
     }
 
     private void initDb(App app) throws SQLException {
         DatabasePreparer preparer = FlywayPreparer.forClasspathLocation("database");
-        PreparedDbProvider provider = PreparedDbProvider.forPreparer(preparer);
-        app.dataSource = provider.createDataSource();
+        preparer.prepare(app.dataSource);
     }
 }

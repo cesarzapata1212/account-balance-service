@@ -11,9 +11,11 @@ public class BalanceTransfer {
     }
 
     public BalanceTransferResult transfer(@NotNull BalanceTransferRequest request) {
-        Account sourceAccount = findAccount(request.getSourceAccount());
-        Account destinationAccount = findAccount(request.getDestinationAccount());
         Money transferAmount = new Money(request.getAmount());
+        Account sourceAccount = findAccount(request.getSourceAccount());
+        validateAvailableBalance(sourceAccount, transferAmount);
+
+        Account destinationAccount = findAccount(request.getDestinationAccount());
 
         BalanceTransferResult result = new BalanceTransferResult(
                 sourceAccount.balance(sourceAccount.balance().minus(transferAmount)),
@@ -24,6 +26,12 @@ public class BalanceTransfer {
         accounts.update(result.destinationAccount());
 
         return result;
+    }
+
+    private void validateAvailableBalance(Account sourceAccount, Money transferAmount) {
+        if (sourceAccount.balance().value().compareTo(transferAmount.value()) < 0) {
+            throw new BusinessOperationException("INSUFFICIENT_BALANCE");
+        }
     }
 
     private Account findAccount(BalanceTransferRequest.Account account) {

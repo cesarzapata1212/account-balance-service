@@ -2,7 +2,9 @@ package com.cesarzapata;
 
 import com.cesarzapata.support.FakeAccountRepository;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
@@ -12,8 +14,10 @@ import static org.junit.Assert.assertThat;
 
 public class BalanceTransferTest {
 
-    private final Account sourceAccount = new Account("00001111", "000111", new Money("1000"));
-    private final Account destinationAccount = new Account("00002222", "000222", new Money(BigDecimal.ZERO));
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
+    private Account sourceAccount = new Account("00001111", "000111", new Money("1000"));
+    private Account destinationAccount = new Account("00002222", "000222", new Money(BigDecimal.ZERO));
     private Accounts fakeAccounts;
 
     @Before
@@ -39,4 +43,22 @@ public class BalanceTransferTest {
         assertThat(result.destinationAccount(), equalTo(fakeAccounts.find(destinationAccount.accountNumber(), destinationAccount.sortCode())));
     }
 
+    @Test
+    public void should_fail_when_source_account_balance_is_insufficient() {
+        new BalanceTransfer(fakeAccounts).transfer(
+                new BalanceTransferRequest(
+                        new BalanceTransferRequest.Account(sourceAccount.accountNumber(), sourceAccount.sortCode()),
+                        new BalanceTransferRequest.Account(destinationAccount.accountNumber(), destinationAccount.sortCode()),
+                        "1000"
+                ));
+
+        thrown.expect(BusinessOperationException.class);
+        thrown.expectMessage("INSUFFICIENT_BALANCE");
+        new BalanceTransfer(fakeAccounts).transfer(
+                new BalanceTransferRequest(
+                        new BalanceTransferRequest.Account(sourceAccount.accountNumber(), sourceAccount.sortCode()),
+                        new BalanceTransferRequest.Account(destinationAccount.accountNumber(), destinationAccount.sortCode()),
+                        "1"
+                ));
+    }
 }

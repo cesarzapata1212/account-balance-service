@@ -1,17 +1,18 @@
 package com.cesarzapata;
 
+import java.math.BigDecimal;
 import java.util.Objects;
 
 public class BalanceTransferRequest {
 
     private Account sourceAccount;
     private Account destinationAccount;
-    private String amount;
+    private BigDecimal amount;
 
     public BalanceTransferRequest() {
     }
 
-    public BalanceTransferRequest(Account sourceAccount, Account destinationAccount, String amount) {
+    public BalanceTransferRequest(Account sourceAccount, Account destinationAccount, BigDecimal amount) {
         this.sourceAccount = sourceAccount;
         this.destinationAccount = destinationAccount;
         this.amount = amount;
@@ -33,11 +34,11 @@ public class BalanceTransferRequest {
         this.destinationAccount = destinationAccount;
     }
 
-    public String getAmount() {
+    public BigDecimal getAmount() {
         return amount;
     }
 
-    public void setAmount(String amount) {
+    public void setAmount(BigDecimal amount) {
         this.amount = amount;
     }
 

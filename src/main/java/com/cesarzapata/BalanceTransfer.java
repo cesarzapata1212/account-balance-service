@@ -3,10 +3,9 @@ package com.cesarzapata;
 import org.jetbrains.annotations.NotNull;
 
 public class BalanceTransfer {
-
     private final Accounts accounts;
 
-    public BalanceTransfer(Accounts accounts) {
+    public BalanceTransfer(@NotNull Accounts accounts) {
         this.accounts = accounts;
     }
 

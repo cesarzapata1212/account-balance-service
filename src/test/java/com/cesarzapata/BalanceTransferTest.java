@@ -34,7 +34,7 @@ public class BalanceTransferTest {
                 new BalanceTransferRequest(
                         new BalanceTransferRequest.Account(sourceAccount.accountNumber(), sourceAccount.sortCode()),
                         new BalanceTransferRequest.Account(destinationAccount.accountNumber(), destinationAccount.sortCode()),
-                        "275"
+                        new BigDecimal("275")
                 ));
 
         assertThat(result.sourceAccount(), equalTo(new Account(sourceAccount.accountNumber(), sourceAccount.sortCode(), new Money("725"))));
@@ -49,7 +49,7 @@ public class BalanceTransferTest {
                 new BalanceTransferRequest(
                         new BalanceTransferRequest.Account(sourceAccount.accountNumber(), sourceAccount.sortCode()),
                         new BalanceTransferRequest.Account(destinationAccount.accountNumber(), destinationAccount.sortCode()),
-                        "1000"
+                        new BigDecimal("1000")
                 ));
 
         thrown.expect(BusinessOperationException.class);
@@ -58,7 +58,7 @@ public class BalanceTransferTest {
                 new BalanceTransferRequest(
                         new BalanceTransferRequest.Account(sourceAccount.accountNumber(), sourceAccount.sortCode()),
                         new BalanceTransferRequest.Account(destinationAccount.accountNumber(), destinationAccount.sortCode()),
-                        "1"
+                        new BigDecimal("1")
                 ));
     }
 
@@ -70,7 +70,7 @@ public class BalanceTransferTest {
                 new BalanceTransferRequest(
                         new BalanceTransferRequest.Account(sourceAccount.accountNumber(), sourceAccount.sortCode()),
                         new BalanceTransferRequest.Account(sourceAccount.accountNumber(), sourceAccount.sortCode()),
-                        "10"
+                        new BigDecimal("10")
                 )
         );
     }

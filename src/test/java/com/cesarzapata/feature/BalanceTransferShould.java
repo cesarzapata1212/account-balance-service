@@ -57,7 +57,7 @@ public class BalanceTransferShould {
         BalanceTransferRequest req = new BalanceTransferRequest(
                 new Account("11114444", "111444"),
                 new Account("22225555", "222555"),
-                "700"
+                new BigDecimal("700")
         );
         createAccount(req.getSourceAccount(), new BigDecimal("1000.00"));
         createAccount(req.getDestinationAccount(), BigDecimal.ZERO);
@@ -84,7 +84,7 @@ public class BalanceTransferShould {
         BalanceTransferRequest req = new BalanceTransferRequest(
                 new Account("99998888", "999888"),
                 new Account("88887777", "888777"),
-                "1000"
+                new BigDecimal("1000")
         );
         createAccount(req.getSourceAccount(), new BigDecimal("500.00"));
         createAccount(req.getDestinationAccount(), BigDecimal.ZERO);
@@ -105,11 +105,10 @@ public class BalanceTransferShould {
     public void account_not_found() throws Exception {
         // GIVEN
         assumeFalse(accountRepository.exists("00000000", "000000"));
-
         BalanceTransferRequest req = new BalanceTransferRequest(
                 new Account("00000000", "000000"),
                 new Account("88887777", "888777"),
-                "1000"
+                new BigDecimal("1000")
         );
 
         // WHEN
@@ -128,7 +127,7 @@ public class BalanceTransferShould {
         BalanceTransferRequest req = new BalanceTransferRequest(
                 new Account("11112222", "111122"),
                 new Account("11112222", "111122"),
-                "100"
+                new BigDecimal("100")
         );
         createAccount(req.getSourceAccount(), new BigDecimal("100.50"));
 

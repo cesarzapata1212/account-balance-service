@@ -2,6 +2,8 @@ package com.cesarzapata;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.math.BigDecimal;
+
 public class BalanceTransfer {
     private final Accounts accounts;
 
@@ -11,20 +13,29 @@ public class BalanceTransfer {
 
     public BalanceTransferResult transfer(@NotNull BalanceTransferRequest req) {
         sourceNotEqualToDestination(req);
-        Money transferAmount = new Money(req.getAmount());
+        validateAmount(req.getAmount());
+
+        Money amount = new Money(req.getAmount());
         Account sourceAccount = findAccount(req.getSourceAccount());
-        enoughBalanceAvailable(sourceAccount, transferAmount);
+        enoughBalanceAvailable(sourceAccount, amount);
+
         Account destinationAccount = findAccount(req.getDestinationAccount());
 
         BalanceTransferResult result = new BalanceTransferResult(
-                sourceAccount.balance(sourceAccount.balance().minus(transferAmount)),
-                destinationAccount.balance(destinationAccount.balance().plus(transferAmount))
+                sourceAccount.balance(sourceAccount.balance().minus(amount)),
+                destinationAccount.balance(destinationAccount.balance().plus(amount))
         );
 
         accounts.update(result.sourceAccount());
         accounts.update(result.destinationAccount());
 
         return result;
+    }
+
+    private void validateAmount(BigDecimal amount) {
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BusinessOperationException("INVALID_AMOUNT");
+        }
     }
 
     private void sourceNotEqualToDestination(BalanceTransferRequest req) {

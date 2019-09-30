@@ -18,19 +18,21 @@ public class BalanceTransferTest {
     public ExpectedException thrown = ExpectedException.none();
     private Account sourceAccount = new Account("00001111", "000111", new Money("1000"));
     private Account destinationAccount = new Account("00002222", "000222", new Money(BigDecimal.ZERO));
-    private Accounts fakeAccounts;
+    private Accounts accounts;
+    private BalanceTransfer balanceTransfer;
 
     @Before
     public void setUp() {
-        fakeAccounts = new FakeAccountRepository(Arrays.asList(
+        accounts = new FakeAccountRepository(Arrays.asList(
                 sourceAccount,
                 destinationAccount
         ));
+        balanceTransfer = new BalanceTransfer(accounts);
     }
 
     @Test
     public void should_make_balance_transfer() {
-        BalanceTransferResult result = new BalanceTransfer(fakeAccounts).transfer(
+        BalanceTransferResult result = balanceTransfer.transfer(
                 new BalanceTransferRequest(
                         new BalanceTransferRequest.Account(sourceAccount.accountNumber(), sourceAccount.sortCode()),
                         new BalanceTransferRequest.Account(destinationAccount.accountNumber(), destinationAccount.sortCode()),
@@ -39,13 +41,13 @@ public class BalanceTransferTest {
 
         assertThat(result.sourceAccount(), equalTo(new Account(sourceAccount.accountNumber(), sourceAccount.sortCode(), new Money("725"))));
         assertThat(result.destinationAccount(), equalTo(new Account(destinationAccount.accountNumber(), destinationAccount.sortCode(), new Money("275"))));
-        assertThat(result.sourceAccount(), equalTo(fakeAccounts.find(sourceAccount.accountNumber(), sourceAccount.sortCode())));
-        assertThat(result.destinationAccount(), equalTo(fakeAccounts.find(destinationAccount.accountNumber(), destinationAccount.sortCode())));
+        assertThat(result.sourceAccount(), equalTo(accounts.find(sourceAccount.accountNumber(), sourceAccount.sortCode())));
+        assertThat(result.destinationAccount(), equalTo(accounts.find(destinationAccount.accountNumber(), destinationAccount.sortCode())));
     }
 
     @Test
     public void should_fail_when_source_account_balance_is_insufficient() {
-        new BalanceTransfer(fakeAccounts).transfer(
+        balanceTransfer.transfer(
                 new BalanceTransferRequest(
                         new BalanceTransferRequest.Account(sourceAccount.accountNumber(), sourceAccount.sortCode()),
                         new BalanceTransferRequest.Account(destinationAccount.accountNumber(), destinationAccount.sortCode()),
@@ -54,7 +56,8 @@ public class BalanceTransferTest {
 
         thrown.expect(BusinessOperationException.class);
         thrown.expectMessage("INSUFFICIENT_BALANCE");
-        new BalanceTransfer(fakeAccounts).transfer(
+
+        balanceTransfer.transfer(
                 new BalanceTransferRequest(
                         new BalanceTransferRequest.Account(sourceAccount.accountNumber(), sourceAccount.sortCode()),
                         new BalanceTransferRequest.Account(destinationAccount.accountNumber(), destinationAccount.sortCode()),
@@ -66,11 +69,40 @@ public class BalanceTransferTest {
     public void validate_transfer_to_same_account() {
         thrown.expect(BusinessOperationException.class);
         thrown.expectMessage("TRANSFER_TO_SAME_ACCOUNT");
-        new BalanceTransfer(fakeAccounts).transfer(
+
+        balanceTransfer.transfer(
                 new BalanceTransferRequest(
                         new BalanceTransferRequest.Account(sourceAccount.accountNumber(), sourceAccount.sortCode()),
                         new BalanceTransferRequest.Account(sourceAccount.accountNumber(), sourceAccount.sortCode()),
                         new BigDecimal("10")
+                )
+        );
+    }
+
+    @Test
+    public void validate_zero_amount() {
+        thrown.expect(BusinessOperationException.class);
+        thrown.expectMessage("INVALID_AMOUNT");
+
+        balanceTransfer.transfer(
+                new BalanceTransferRequest(
+                        new BalanceTransferRequest.Account(sourceAccount.accountNumber(), sourceAccount.sortCode()),
+                        new BalanceTransferRequest.Account(destinationAccount.accountNumber(), destinationAccount.sortCode()),
+                        BigDecimal.ZERO
+                )
+        );
+    }
+
+    @Test
+    public void validate_negative_amount() {
+        thrown.expect(BusinessOperationException.class);
+        thrown.expectMessage("INVALID_AMOUNT");
+
+        balanceTransfer.transfer(
+                new BalanceTransferRequest(
+                        new BalanceTransferRequest.Account(sourceAccount.accountNumber(), sourceAccount.sortCode()),
+                        new BalanceTransferRequest.Account(destinationAccount.accountNumber(), destinationAccount.sortCode()),
+                        BigDecimal.TEN.negate()
                 )
         );
     }

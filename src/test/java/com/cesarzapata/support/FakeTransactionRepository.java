@@ -23,7 +23,8 @@ public class FakeTransactionRepository implements Transactions {
     }
 
     @Override
-    public void add(@NotNull Transaction transaction) {
+    public Long add(@NotNull Transaction transaction) {
         transactions.add(transaction);
+        return Long.valueOf(transactions.indexOf(transaction));
     }
 }

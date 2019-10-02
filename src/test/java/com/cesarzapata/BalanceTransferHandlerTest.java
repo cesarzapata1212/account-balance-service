@@ -32,6 +32,8 @@ public class BalanceTransferHandlerTest {
     @Mock
     private Accounts accounts;
     @Mock
+    private Transactions transactions;
+    @Mock
     private HttpServletResponse res;
     @InjectMocks
     private BalanceTransferHandler balanceTransferHandler;

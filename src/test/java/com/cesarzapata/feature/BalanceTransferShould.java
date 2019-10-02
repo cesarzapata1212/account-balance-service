@@ -20,6 +20,7 @@ import org.junit.Test;
 import java.math.BigDecimal;
 import java.sql.SQLException;
 
+import static com.cesarzapata.support.CompareTo.compareTo;
 import static io.restassured.RestAssured.given;
 import static io.restassured.config.JsonConfig.jsonConfig;
 import static io.restassured.path.json.config.JsonPathConfig.NumberReturnType.BIG_DECIMAL;
@@ -84,11 +85,11 @@ public class BalanceTransferShould {
 
         assertThat(transactionRepository.selectId("11114444", "111444"), not(nullValue()));
         assertThat(transactionRepository.selectType("11114444", "111444"), equalTo("PAYMENT_TRANSFER"));
-        assertThat(transactionRepository.selectAmount("11114444", "111444"), equalTo(new BigDecimal("700")));
+        assertThat(transactionRepository.selectAmount("11114444", "111444"), compareTo(new BigDecimal("700")));
 
         assertThat(transactionRepository.selectId("22225555", "222555"), not(nullValue()));
         assertThat(transactionRepository.selectType("22225555", "222555"), equalTo("CREDIT"));
-        assertThat(transactionRepository.selectAmount("22225555", "222555"), equalTo(new BigDecimal("700")));
+        assertThat(transactionRepository.selectAmount("22225555", "222555"), compareTo(new BigDecimal("700")));
     }
 
     @Test

@@ -6,16 +6,16 @@ import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class BalanceTransferHandler implements Handler {
-    private final Accounts accounts;
+    private final BalanceTransfer balanceTransfer;
 
-    public BalanceTransferHandler(@NotNull Accounts accounts) {
-        this.accounts = accounts;
+    public BalanceTransferHandler(@NotNull Accounts accounts, @NotNull Transactions transactions) {
+        this.balanceTransfer = new BalanceTransfer(accounts, transactions);
     }
 
     @Override
     public void handle(@NotNull Context context) {
         BalanceTransferRequest req = context.bodyAsClass(BalanceTransferRequest.class);
-        BalanceTransferResult result = new BalanceTransfer(accounts).transfer(validate(req));
+        BalanceTransferResult result = balanceTransfer.transfer(validate(req));
         context.json(result);
     }
 

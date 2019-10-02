@@ -1,6 +1,7 @@
 package com.cesarzapata;
 
 import com.cesarzapata.support.FakeAccountRepository;
+import com.cesarzapata.support.FakeTransactionRepository;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -20,6 +21,7 @@ public class BalanceTransferTest {
     private Account destinationAccount = new Account("00002222", "000222", new Money(BigDecimal.ZERO));
     private Accounts accounts;
     private BalanceTransfer balanceTransfer;
+    private FakeTransactionRepository transactions;
 
     @Before
     public void setUp() {
@@ -27,7 +29,8 @@ public class BalanceTransferTest {
                 sourceAccount,
                 destinationAccount
         ));
-        balanceTransfer = new BalanceTransfer(accounts);
+        transactions = new FakeTransactionRepository();
+        balanceTransfer = new BalanceTransfer(accounts, transactions);
     }
 
     @Test
@@ -43,6 +46,12 @@ public class BalanceTransferTest {
         assertThat(result.destinationAccount(), equalTo(new Account(destinationAccount.accountNumber(), destinationAccount.sortCode(), new Money("275"))));
         assertThat(result.sourceAccount(), equalTo(accounts.find(sourceAccount.accountNumber(), sourceAccount.sortCode())));
         assertThat(result.destinationAccount(), equalTo(accounts.find(destinationAccount.accountNumber(), destinationAccount.sortCode())));
+        Transaction sourceTransaction = transactions.find(sourceAccount.accountNumber(), sourceAccount.sortCode());
+        assertThat(sourceTransaction, equalTo(new PaymentTransferTransaction(
+                sourceAccount.accountNumber(),
+                sourceAccount.sortCode(),
+                new Money("275")
+        )));
     }
 
     @Test

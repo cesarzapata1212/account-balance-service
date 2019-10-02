@@ -6,9 +6,11 @@ import java.math.BigDecimal;
 
 public class BalanceTransfer {
     private final Accounts accounts;
+    private final Transactions transactions;
 
-    public BalanceTransfer(@NotNull Accounts accounts) {
+    public BalanceTransfer(@NotNull Accounts accounts, @NotNull Transactions transactions) {
         this.accounts = accounts;
+        this.transactions = transactions;
     }
 
     public BalanceTransferResult transfer(@NotNull BalanceTransferRequest req) {
@@ -28,6 +30,8 @@ public class BalanceTransfer {
 
         accounts.update(result.sourceAccount());
         accounts.update(result.destinationAccount());
+
+        transactions.add(new PaymentTransferTransaction(sourceAccount.accountNumber(), sourceAccount.sortCode(), amount));
 
         return result;
     }

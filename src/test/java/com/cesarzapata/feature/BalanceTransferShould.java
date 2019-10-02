@@ -5,6 +5,7 @@ import com.cesarzapata.BalanceTransferRequest;
 import com.cesarzapata.BalanceTransferRequest.Account;
 import com.cesarzapata.support.AccountBalanceRepository;
 import com.cesarzapata.support.AccountRepository;
+import com.cesarzapata.support.TransactionRepository;
 import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import io.javalin.Javalin;
 import io.restassured.RestAssured;
@@ -24,6 +25,8 @@ import static io.restassured.config.JsonConfig.jsonConfig;
 import static io.restassured.path.json.config.JsonPathConfig.NumberReturnType.BIG_DECIMAL;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assume.assumeFalse;
 
@@ -33,6 +36,7 @@ public class BalanceTransferShould {
     private static Javalin server;
     private AccountRepository accountRepository;
     private AccountBalanceRepository accountBalanceRepository;
+    private TransactionRepository transactionRepository;
 
     @BeforeClass
     public static void beforeClass() throws Exception {
@@ -49,6 +53,7 @@ public class BalanceTransferShould {
     public void beforeEach() {
         accountRepository = new AccountRepository(app.dataSource());
         accountBalanceRepository = new AccountBalanceRepository(app.dataSource());
+        transactionRepository = new TransactionRepository(app.dataSource());
     }
 
     @Test
@@ -76,6 +81,14 @@ public class BalanceTransferShould {
 
         assertThat(accountBalanceRepository.selectBalance("11114444", "111444"), equalTo("300.00"));
         assertThat(accountBalanceRepository.selectBalance("22225555", "222555"), equalTo("700.00"));
+
+        assertThat(transactionRepository.selectId("11114444", "111444"), not(nullValue()));
+        assertThat(transactionRepository.selectType("11114444", "111444"), equalTo("PAYMENT_TRANSFER"));
+        assertThat(transactionRepository.selectAmount("11114444", "111444"), equalTo(new BigDecimal("700")));
+
+        assertThat(transactionRepository.selectId("22225555", "222555"), not(nullValue()));
+        assertThat(transactionRepository.selectType("22225555", "222555"), equalTo("CREDIT"));
+        assertThat(transactionRepository.selectAmount("22225555", "222555"), equalTo(new BigDecimal("700")));
     }
 
     @Test

@@ -57,5 +57,12 @@ public class TransactionsImplTest {
 
         new TransactionsImpl(db.getTestDatabase()).add(transaction); // throws no account constraint error
     }
-    // CANNOT ADD transaction with id
+
+    @Test
+    public void fail_when_transaction_id_is_provided() {
+        thrown.expect(BusinessOperationException.class);
+        thrown.expectMessage("Invalid transaction id provided");
+
+        new TransactionsImpl((db.getTestDatabase())).add(new DirectDepositTransaction(1L, "1", "1", new Money("1")));
+    }
 }

@@ -16,6 +16,9 @@ public class TransactionsImpl implements Transactions {
 
     @Override
     public Long add(@NotNull Transaction t) {
+        if (t.id() != 0L) {
+            throw new BusinessOperationException("Invalid transaction id provided");
+        }
         try {
             return new JdbcSession(dataSource)
                     .sql("INSERT INTO transaction (account_number, sort_code, type, amount, date_time) " +

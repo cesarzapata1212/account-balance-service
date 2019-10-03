@@ -55,6 +55,7 @@ public class TransactionsImplTest {
         thrown.expect(BusinessOperationException.class);
         thrown.expectMessage("Failed to insert transaction");
 
-        new TransactionsImpl(db.getTestDatabase()).add(transaction);
+        new TransactionsImpl(db.getTestDatabase()).add(transaction); // throws no account constraint error
     }
+    // CANNOT ADD transaction with id
 }

@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 
 public interface Transaction {
 
+    Long id();
+
     String accountNumber();
 
     String sortCode();

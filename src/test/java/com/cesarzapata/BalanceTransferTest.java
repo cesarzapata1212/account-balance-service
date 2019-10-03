@@ -52,6 +52,12 @@ public class BalanceTransferTest {
                 sourceAccount.sortCode(),
                 new Money("275")
         )));
+        Transaction destinationTransaction = transactions.find(destinationAccount.accountNumber(), destinationAccount.sortCode());
+        assertThat(destinationTransaction, equalTo(new DirectDepositTransaction(
+                destinationTransaction.accountNumber(),
+                destinationTransaction.sortCode(),
+                new Money("275")
+        )));
     }
 
     @Test

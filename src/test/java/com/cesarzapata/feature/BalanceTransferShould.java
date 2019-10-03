@@ -88,7 +88,7 @@ public class BalanceTransferShould {
         assertThat(transactionRepository.selectAmount("11114444", "111444"), compareTo(new BigDecimal("700")));
 
         assertThat(transactionRepository.selectId("22225555", "222555"), not(nullValue()));
-        assertThat(transactionRepository.selectType("22225555", "222555"), equalTo("CREDIT"));
+        assertThat(transactionRepository.selectType("22225555", "222555"), equalTo("DIRECT_DEPOSIT"));
         assertThat(transactionRepository.selectAmount("22225555", "222555"), compareTo(new BigDecimal("700")));
     }
 

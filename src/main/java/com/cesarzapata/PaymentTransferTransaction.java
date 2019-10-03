@@ -27,6 +27,11 @@ public class PaymentTransferTransaction implements Transaction {
     }
 
     @Override
+    public Long id() {
+        return id;
+    }
+
+    @Override
     public String accountNumber() {
         return this.accountNumber;
     }

@@ -8,7 +8,8 @@ available_balance numeric (13, 2) NOT NULL,
 PRIMARY KEY (account_number, sort_code),
 FOREIGN KEY (account_number, sort_code) REFERENCES account (account_number, sort_code)) ;
 
-CREATE TYPE transaction_type AS ENUM ( 'PAYMENT_TRANSFER', 'DIRECT_DEPOSIT' ) ;
+CREATE
+TYPE transaction_type AS ENUM ( 'DIRECT_PAYMENT' , 'DIRECT_DEPOSIT' ) ;
 
 CREATE TABLE transaction ( id SERIAL NOT NULL ,
 account_number varchar NOT NULL ,

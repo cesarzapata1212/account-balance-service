@@ -84,7 +84,7 @@ public class BalanceTransferShould {
         assertThat(accountBalanceRepository.selectBalance("22225555", "222555"), equalTo("700.00"));
 
         assertThat(transactionRepository.selectId("11114444", "111444"), not(nullValue()));
-        assertThat(transactionRepository.selectType("11114444", "111444"), equalTo("PAYMENT_TRANSFER"));
+        assertThat(transactionRepository.selectType("11114444", "111444"), equalTo("DIRECT_PAYMENT"));
         assertThat(transactionRepository.selectAmount("11114444", "111444"), compareTo(new BigDecimal("700")));
 
         assertThat(transactionRepository.selectId("22225555", "222555"), not(nullValue()));

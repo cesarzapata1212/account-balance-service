@@ -47,7 +47,7 @@ public class BalanceTransferTest {
         assertThat(result.sourceAccount(), equalTo(accounts.find(sourceAccount.accountNumber(), sourceAccount.sortCode())));
         assertThat(result.destinationAccount(), equalTo(accounts.find(destinationAccount.accountNumber(), destinationAccount.sortCode())));
         Transaction sourceTransaction = transactions.find(sourceAccount.accountNumber(), sourceAccount.sortCode());
-        assertThat(sourceTransaction, equalTo(new PaymentTransferTransaction(
+        assertThat(sourceTransaction, equalTo(new DirectPaymentTransaction(
                 sourceAccount.accountNumber(),
                 sourceAccount.sortCode(),
                 new Money("275")

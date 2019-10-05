@@ -31,7 +31,7 @@ public class BalanceTransfer {
         accounts.update(result.sourceAccount());
         accounts.update(result.destinationAccount());
 
-        transactions.add(new PaymentTransferTransaction(sourceAccount.accountNumber(), sourceAccount.sortCode(), amount));
+        transactions.add(new DirectPaymentTransaction(sourceAccount.accountNumber(), sourceAccount.sortCode(), amount));
         transactions.add(new DirectDepositTransaction(destinationAccount.accountNumber(), destinationAccount.sortCode(), amount));
 
         return result;

@@ -37,7 +37,7 @@ public class TransactionsImplTest {
         String accountNumber = "11114444";
         String sortCode = "111444";
         accountRepository.insert(accountNumber, sortCode);
-        Transaction transaction = new PaymentTransferTransaction(accountNumber, sortCode, new Money("1"));
+        Transaction transaction = new DirectPaymentTransaction(accountNumber, sortCode, new Money("1"));
 
         Long id = new TransactionsImpl(db.getTestDatabase()).add(transaction);
 
@@ -50,7 +50,7 @@ public class TransactionsImplTest {
 
     @Test
     public void failed_insert() {
-        Transaction transaction = new PaymentTransferTransaction("11114444", "111444", new Money("1"));
+        Transaction transaction = new DirectPaymentTransaction("11114444", "111444", new Money("1"));
 
         thrown.expect(BusinessOperationException.class);
         thrown.expectMessage("Failed to insert transaction");

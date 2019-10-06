@@ -7,7 +7,6 @@ import com.opentable.db.postgres.embedded.FlywayPreparer;
 import com.opentable.db.postgres.junit.EmbeddedPostgresRules;
 import com.opentable.db.postgres.junit.PreparedDbRule;
 import io.javalin.http.Context;
-import org.hamcrest.CoreMatchers;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -19,7 +18,7 @@ import java.util.HashMap;
 
 import static junit.framework.TestCase.fail;
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertFalse;
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -30,7 +29,7 @@ public class TransactionalHandlerImplTest {
     public PreparedDbRule db = EmbeddedPostgresRules.preparedDatabase(FlywayPreparer.forClasspathLocation("database"));
 
     @Test
-    public void should_rollback_when_exception_is_thrown() throws Exception {
+    public void should_rollback_and_rethrow_when_handler_fails() throws Exception {
         TransactionalHandler handler = (ctx, session) -> {
             try {
                 insertAccount(session);
@@ -46,7 +45,7 @@ public class TransactionalHandlerImplTest {
             assertThat(e.getMessage(), equalTo("Insert should be rolled back"));
         }
 
-        assertFalse(new AccountRepository(db.getTestDatabase()).exists("111", "111"));
+        assertThat(new AccountRepository(db.getTestDatabase()).exists("111", "111"), is(false));
     }
 
     @Test
@@ -61,7 +60,7 @@ public class TransactionalHandlerImplTest {
 
         new TransactionalHandlerImpl(db.getTestDatabase(), handler).handle(context());
 
-        assertThat(new AccountRepository(db.getTestDatabase()).exists("111", "111"), CoreMatchers.is(true));
+        assertThat(new AccountRepository(db.getTestDatabase()).exists("111", "111"), is(true));
     }
 
     @Test

@@ -30,6 +30,10 @@ public class TransactionalHandlerImpl implements Handler {
             throw e;
         }
 
+        commit(session);
+    }
+
+    private void commit(JdbcSession session) throws SQLException {
         session.sql("COMMIT").execute();
     }
 
@@ -37,9 +41,7 @@ public class TransactionalHandlerImpl implements Handler {
         try {
             session.rollback();
         } catch (IllegalStateException e) {
-            if (!e.getMessage().equals("connection is not open, can't rollback")) {
-                throw e;
-            }
+            // connection is not open, can't rollback ignored
         }
     }
 

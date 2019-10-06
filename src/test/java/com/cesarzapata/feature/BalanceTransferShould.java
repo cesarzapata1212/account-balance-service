@@ -134,7 +134,6 @@ public class BalanceTransferShould {
                 .body("message", is("ACCOUNT_NOT_FOUND"));
     }
 
-
     @Test
     public void transfer_between_same_account() throws Exception {
         // GIVEN

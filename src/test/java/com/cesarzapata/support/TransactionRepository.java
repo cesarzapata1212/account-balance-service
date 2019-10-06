@@ -18,33 +18,22 @@ public class TransactionRepository {
     }
 
     public Long selectId(String accountNumber, String sortCode) throws SQLException {
-        String sql = "SELECT id " +
-                " FROM transaction " +
-                " WHERE account_number = ? " +
-                " AND sort_code = ?";
-
         return new JdbcSession(dataSource)
-                .sql(sql)
+                .sql("SELECT id FROM transaction WHERE account_number = ? AND sort_code = ?")
                 .set(accountNumber)
                 .set(sortCode)
                 .select(new SingleOutcome<>(Long.class));
     }
 
     public String selectType(String accountNumber, String sortCode) throws SQLException {
-        String sql = "SELECT type " +
-                " FROM transaction " +
-                " WHERE account_number = ? " +
-                " AND sort_code = ?";
-
         return new JdbcSession(dataSource)
-                .sql(sql)
+                .sql("SELECT type FROM transaction WHERE account_number = ? AND sort_code = ?")
                 .set(accountNumber)
                 .set(sortCode)
                 .select(new SingleOutcome<>(String.class));
     }
 
     public BigDecimal selectAmount(String accountNumber, String sortCode) throws SQLException {
-
         return new BigDecimal(
                 new JdbcSession(dataSource)
                         .sql("SELECT amount FROM transaction WHERE account_number = ? AND sort_code = ?")
@@ -61,6 +50,5 @@ public class TransactionRepository {
                 .set(sortCode)
                 .select(new SingleOutcome<>(String.class));
         return LocalDateTime.parse(d, POSTGRES_DATE_TIME_FORMATTER);
-
     }
 }

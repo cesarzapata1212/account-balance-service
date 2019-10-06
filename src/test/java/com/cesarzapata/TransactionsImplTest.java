@@ -2,6 +2,7 @@ package com.cesarzapata;
 
 import com.cesarzapata.support.AccountRepository;
 import com.cesarzapata.support.TransactionRepository;
+import com.jcabi.jdbc.JdbcSession;
 import com.opentable.db.postgres.embedded.FlywayPreparer;
 import com.opentable.db.postgres.junit.EmbeddedPostgresRules;
 import com.opentable.db.postgres.junit.PreparedDbRule;
@@ -39,7 +40,7 @@ public class TransactionsImplTest {
         accountRepository.insert(accountNumber, sortCode);
         Transaction transaction = new DirectPaymentTransaction(accountNumber, sortCode, new Money("1"));
 
-        Long id = new TransactionsImpl(db.getTestDatabase()).add(transaction);
+        Long id = new TransactionsImpl(new JdbcSession(db.getTestDatabase())).add(transaction);
 
         assertThat(id, notNullValue());
         assertThat(transactionRepository.selectId(accountNumber, sortCode), equalTo(id));
@@ -55,7 +56,7 @@ public class TransactionsImplTest {
         thrown.expect(BusinessOperationException.class);
         thrown.expectMessage("Failed to insert transaction");
 
-        new TransactionsImpl(db.getTestDatabase()).add(transaction); // throws no account constraint error
+        new TransactionsImpl(new JdbcSession(db.getTestDatabase())).add(transaction); // throws no account constraint error
     }
 
     @Test
@@ -63,6 +64,6 @@ public class TransactionsImplTest {
         thrown.expect(BusinessOperationException.class);
         thrown.expectMessage("Invalid transaction id provided");
 
-        new TransactionsImpl((db.getTestDatabase())).add(new DirectDepositTransaction(1L, "1", "1", new Money("1")));
+        new TransactionsImpl((new JdbcSession(db.getTestDatabase()))).add(new DirectDepositTransaction(1L, "1", "1", new Money("1")));
     }
 }

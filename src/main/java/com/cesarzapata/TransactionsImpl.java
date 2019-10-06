@@ -4,14 +4,15 @@ import com.jcabi.jdbc.JdbcSession;
 import com.jcabi.jdbc.Outcome;
 import org.jetbrains.annotations.NotNull;
 
-import javax.sql.DataSource;
 import java.sql.SQLException;
 
-public class TransactionsImpl implements Transactions {
-    private final DataSource dataSource;
+import static java.util.Objects.requireNonNull;
 
-    public TransactionsImpl(DataSource dataSource) {
-        this.dataSource = dataSource;
+public class TransactionsImpl implements Transactions {
+    private final JdbcSession session;
+
+    public TransactionsImpl(@NotNull JdbcSession session) {
+        this.session = requireNonNull(session);
     }
 
     @Override
@@ -20,7 +21,7 @@ public class TransactionsImpl implements Transactions {
             throw new BusinessOperationException("Invalid transaction id provided");
         }
         try {
-            return new JdbcSession(dataSource)
+            return session
                     .sql("INSERT INTO transaction (account_number, sort_code, type, amount, date_time) " +
                             " VALUES (?, ?, ?::transaction_type, ?, ?)")
                     .set(t.accountNumber())

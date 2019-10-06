@@ -1,21 +1,20 @@
 package com.cesarzapata;
 
+import com.jcabi.jdbc.JdbcSession;
 import io.javalin.http.Context;
-import io.javalin.http.Handler;
-import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class BalanceTransferHandler implements Handler {
-    private final BalanceTransfer balanceTransfer;
+import static com.cesarzapata.Validate.notBlank;
+import static com.cesarzapata.Validate.notNull;
 
-    public BalanceTransferHandler(@NotNull Accounts accounts, @NotNull Transactions transactions) {
-        this.balanceTransfer = new BalanceTransfer(accounts, transactions);
-    }
+public class BalanceTransferHandler implements TransactionalHandler {
 
     @Override
-    public void handle(@NotNull Context context) {
+    public void handle(@NotNull Context context, JdbcSession session) {
         BalanceTransferRequest req = context.bodyAsClass(BalanceTransferRequest.class);
-        BalanceTransferResult result = balanceTransfer.transfer(validate(req));
+        AccountsImpl accounts = new AccountsImpl(session);
+        TransactionsImpl transactions = new TransactionsImpl(session);
+        BalanceTransferResult result = new BalanceTransfer(accounts, transactions).transfer(validate(req));
         context.json(result);
     }
 
@@ -28,17 +27,5 @@ public class BalanceTransferHandler implements Handler {
         notBlank(req.getDestinationAccount().getSortCode(), "Invalid destinationAccount.sortCode provided");
         notNull(req.getAmount(), "Invalid amount provided");
         return req;
-    }
-
-    private void notBlank(String s, String msg) {
-        if (StringUtils.isBlank(s)) {
-            throw new IllegalArgumentException(msg);
-        }
-    }
-
-    private void notNull(Object o, String message) {
-        if (o == null) {
-            throw new IllegalArgumentException(message);
-        }
     }
 }

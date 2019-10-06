@@ -2,6 +2,7 @@ package com.cesarzapata;
 
 import com.cesarzapata.support.AccountBalanceRepository;
 import com.cesarzapata.support.AccountRepository;
+import com.jcabi.jdbc.JdbcSession;
 import com.opentable.db.postgres.embedded.FlywayPreparer;
 import com.opentable.db.postgres.junit.EmbeddedPostgresRules;
 import com.opentable.db.postgres.junit.PreparedDbRule;
@@ -20,7 +21,6 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
 public class AccountsImplTest {
-
     @Rule
     public ExpectedException thrown = ExpectedException.none();
     @Rule
@@ -40,7 +40,7 @@ public class AccountsImplTest {
     public void should_fetch_account_and_set_balance_to_zero() throws SQLException {
         accountRepository.insert("00001111", "000111");
 
-        Account account = new AccountsImpl(dataSource).find("00001111", "000111");
+        Account account = new AccountsImpl(new JdbcSession(dataSource)).find("00001111", "000111");
 
         assertThat(account, equalTo(new Account("00001111", "000111", new Money("0.00"))));
     }
@@ -51,7 +51,7 @@ public class AccountsImplTest {
         accountRepository.insert("00001111", "0001111");
         accountBalanceRepository.insert("00001111", "0001111", balance);
 
-        Account result = new AccountsImpl(dataSource).find("00001111", "0001111");
+        Account result = new AccountsImpl(new JdbcSession(dataSource)).find("00001111", "0001111");
 
         assertThat(result, equalTo(new Account("00001111", "0001111", new Money(balance))));
     }
@@ -63,7 +63,7 @@ public class AccountsImplTest {
         thrown.expect(new HasPropertyWithValue("accountNumber", is("00000000")));
         thrown.expect(new HasPropertyWithValue("sortCode", is("000000")));
 
-        new AccountsImpl(dataSource).find("00000000", "000000");
+        new AccountsImpl(new JdbcSession(dataSource)).find("00000000", "000000");
     }
 
     @Test
@@ -71,7 +71,7 @@ public class AccountsImplTest {
         accountRepository.insert("00001111", "000111");
         accountBalanceRepository.insert("00001111", "000111", BigDecimal.ZERO);
 
-        new AccountsImpl(dataSource).update(new Account("00001111", "000111", new Money("100")));
+        new AccountsImpl(new JdbcSession(dataSource)).update(new Account("00001111", "000111", new Money("100")));
 
         assertThat(accountBalanceRepository.selectBalance("00001111", "000111"), equalTo("100.00"));
     }
@@ -83,6 +83,6 @@ public class AccountsImplTest {
         thrown.expect(new HasPropertyWithValue("accountNumber", is("00000000")));
         thrown.expect(new HasPropertyWithValue("sortCode", is("000000")));
 
-        new AccountsImpl(dataSource).update(new Account("00000000", "000000", new Money("100")));
+        new AccountsImpl(new JdbcSession(dataSource)).update(new Account("00000000", "000000", new Money("100")));
     }
 }

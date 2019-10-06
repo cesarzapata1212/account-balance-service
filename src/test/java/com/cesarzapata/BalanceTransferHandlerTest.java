@@ -1,6 +1,7 @@
 package com.cesarzapata;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jcabi.jdbc.JdbcSession;
 import io.javalin.http.Context;
 import org.junit.Before;
 import org.junit.Rule;
@@ -16,6 +17,7 @@ import javax.servlet.ReadListener;
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,11 +32,7 @@ public class BalanceTransferHandlerTest {
     @Rule
     public ExpectedException thrown = ExpectedException.none();
     @Mock
-    private Accounts accounts;
-    @Mock
-    private Transactions transactions;
-    @Mock
-    private HttpServletResponse res;
+    private DataSource dataSource;
     @InjectMocks
     private BalanceTransferHandler balanceTransferHandler;
     private BalanceTransferRequest payload;
@@ -55,7 +53,7 @@ public class BalanceTransferHandlerTest {
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("Invalid sourceAccount provided");
 
-        balanceTransferHandler.handle(createContext());
+        balanceTransferHandler.handle(context(), new JdbcSession(dataSource));
     }
 
     @Test
@@ -65,7 +63,7 @@ public class BalanceTransferHandlerTest {
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("Invalid sourceAccount.accountNumber provided");
 
-        balanceTransferHandler.handle(createContext());
+        balanceTransferHandler.handle(context(), new JdbcSession(dataSource));
     }
 
     @Test
@@ -75,7 +73,7 @@ public class BalanceTransferHandlerTest {
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("Invalid sourceAccount.sortCode provided");
 
-        balanceTransferHandler.handle(createContext());
+        balanceTransferHandler.handle(context(), new JdbcSession(dataSource));
     }
 
     @Test
@@ -85,7 +83,7 @@ public class BalanceTransferHandlerTest {
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("Invalid destinationAccount provided");
 
-        balanceTransferHandler.handle(createContext());
+        balanceTransferHandler.handle(context(), new JdbcSession(dataSource));
     }
 
     @Test
@@ -95,7 +93,7 @@ public class BalanceTransferHandlerTest {
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("Invalid destinationAccount.accountNumber provided");
 
-        balanceTransferHandler.handle(createContext());
+        balanceTransferHandler.handle(context(), new JdbcSession(dataSource));
     }
 
     @Test
@@ -105,7 +103,7 @@ public class BalanceTransferHandlerTest {
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("Invalid destinationAccount.sortCode provided");
 
-        balanceTransferHandler.handle(createContext());
+        balanceTransferHandler.handle(context(), new JdbcSession(dataSource));
     }
 
     @Test
@@ -115,11 +113,12 @@ public class BalanceTransferHandlerTest {
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("Invalid amount provided");
 
-        balanceTransferHandler.handle(createContext());
+        balanceTransferHandler.handle(context(), new JdbcSession(dataSource));
     }
 
-    private Context createContext() throws Exception {
+    private Context context() throws Exception {
         HttpServletRequest req = mockServletPayload();
+        HttpServletResponse res = Mockito.mock(HttpServletResponse.class);
         return new Context(req, res, new HashMap<>());
     }
 
@@ -134,7 +133,6 @@ public class BalanceTransferHandlerTest {
     }
 
     class MockServletInputStream extends ServletInputStream {
-
         private InputStream inputStream;
 
         public MockServletInputStream(InputStream is) {

@@ -3,14 +3,16 @@ package com.cesarzapata;
 import com.jcabi.jdbc.JdbcSession;
 import org.jetbrains.annotations.NotNull;
 
-import javax.sql.DataSource;
 import java.sql.SQLException;
 
-public class AccountsImpl implements Accounts {
-    private final DataSource dataSource;
+import static java.util.Objects.requireNonNull;
 
-    public AccountsImpl(@NotNull DataSource dataSource) {
-        this.dataSource = dataSource;
+public class AccountsImpl implements Accounts {
+
+    private JdbcSession session;
+
+    public AccountsImpl(@NotNull JdbcSession session) {
+        this.session = requireNonNull(session);
     }
 
     @Override
@@ -19,7 +21,8 @@ public class AccountsImpl implements Accounts {
                 "LEFT JOIN account_balance ab ON a.account_number = ab.account_number AND a.sort_code = ab.sort_code " +
                 "WHERE a.account_number = ? AND a.sort_code = ?";
         try {
-            return new JdbcSession(dataSource).sql(sql)
+            return session
+                    .sql(sql)
                     .set(accountNumber)
                     .set(sortCode)
                     .select(new SingleAccountOutcome());
@@ -30,10 +33,9 @@ public class AccountsImpl implements Accounts {
 
     @Override
     public void update(Account account) {
-        String sql = "UPDATE account_balance SET available_balance = ? WHERE account_number = ? AND sort_code = ?";
         Account a = find(account.accountNumber(), account.sortCode());
         try {
-            new JdbcSession(dataSource).sql(sql)
+            session.sql("UPDATE account_balance SET available_balance = ? WHERE account_number = ? AND sort_code = ?")
                     .set(account.balance().value())
                     .set(a.accountNumber())
                     .set(a.sortCode())

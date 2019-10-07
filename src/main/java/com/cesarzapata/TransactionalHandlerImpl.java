@@ -34,7 +34,7 @@ public class TransactionalHandlerImpl implements Handler {
     }
 
     private void commit(JdbcSession session) throws SQLException {
-        session.sql("COMMIT").execute();
+        session.commit();
     }
 
     private void rollback(JdbcSession session) throws SQLException {
@@ -49,6 +49,6 @@ public class TransactionalHandlerImpl implements Handler {
     private JdbcSession beginTransaction() throws SQLException {
         return new JdbcSession(dataSource)
                 .autocommit(false)
-                .sql("BEGIN TRANSACTION").execute();
+                .sql("BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE").execute();
     }
 }

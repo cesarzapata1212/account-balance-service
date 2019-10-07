@@ -1,5 +1,7 @@
 package com.cesarzapata;
 
+import com.cesarzapata.core.Account;
+
 public class BalanceTransferResult {
 
     private Account destinationAccount;

@@ -1,12 +1,12 @@
 package com.cesarzapata.concurrency;
 
-import com.cesarzapata.Account;
-import com.cesarzapata.AccountsImpl;
 import com.cesarzapata.BalanceTransferHandler;
 import com.cesarzapata.BalanceTransferRequest;
-import com.cesarzapata.ConcurrentAccountUpdateException;
-import com.cesarzapata.Money;
-import com.cesarzapata.TransactionalHandlerImpl;
+import com.cesarzapata.common.TransactionalHandlerImpl;
+import com.cesarzapata.core.Account;
+import com.cesarzapata.core.AccountsImpl;
+import com.cesarzapata.core.ConcurrentAccountUpdateException;
+import com.cesarzapata.core.Money;
 import com.cesarzapata.support.AccountBalanceRepository;
 import com.cesarzapata.support.AccountRepository;
 import com.cesarzapata.support.TestContext;

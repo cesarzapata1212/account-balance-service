@@ -1,11 +1,15 @@
 package com.cesarzapata;
 
+import com.cesarzapata.common.TransactionalHandler;
+import com.cesarzapata.core.AccountsImpl;
+import com.cesarzapata.core.BalanceTransfer;
+import com.cesarzapata.core.TransactionsImpl;
 import com.jcabi.jdbc.JdbcSession;
 import io.javalin.http.Context;
 import org.jetbrains.annotations.NotNull;
 
-import static com.cesarzapata.Validate.notBlank;
-import static com.cesarzapata.Validate.notNull;
+import static com.cesarzapata.common.Validate.notBlank;
+import static com.cesarzapata.common.Validate.notNull;
 
 public class BalanceTransferHandler implements TransactionalHandler {
 

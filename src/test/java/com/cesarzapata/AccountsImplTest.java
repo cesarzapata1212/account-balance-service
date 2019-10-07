@@ -6,7 +6,6 @@ import com.jcabi.jdbc.JdbcSession;
 import com.opentable.db.postgres.embedded.FlywayPreparer;
 import com.opentable.db.postgres.junit.EmbeddedPostgresRules;
 import com.opentable.db.postgres.junit.PreparedDbRule;
-import org.hamcrest.beans.HasPropertyWithValue;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -18,6 +17,7 @@ import java.sql.SQLException;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.beans.HasPropertyWithValue.hasProperty;
 import static org.junit.Assert.assertThat;
 
 public class AccountsImplTest {
@@ -57,11 +57,11 @@ public class AccountsImplTest {
     }
 
     @Test
-    public void should_fail_account_not_found() {
+    public void should_fail_when_account_is_not_found() {
         thrown.expect(AccountNotFoundException.class);
         thrown.expectMessage("ACCOUNT_NOT_FOUND");
-        thrown.expect(new HasPropertyWithValue("accountNumber", is("00000000")));
-        thrown.expect(new HasPropertyWithValue("sortCode", is("000000")));
+        thrown.expect(hasProperty("accountNumber", is("00000000")));
+        thrown.expect(hasProperty("sortCode", is("000000")));
 
         new AccountsImpl(new JdbcSession(dataSource)).find("00000000", "000000");
     }
@@ -77,11 +77,11 @@ public class AccountsImplTest {
     }
 
     @Test
-    public void should_fail_when_updated_account_is_not_found() throws SQLException {
+    public void should_fail_when_updated_account_is_not_found() {
         thrown.expect(AccountNotFoundException.class);
         thrown.expectMessage("ACCOUNT_NOT_FOUND");
-        thrown.expect(new HasPropertyWithValue("accountNumber", is("00000000")));
-        thrown.expect(new HasPropertyWithValue("sortCode", is("000000")));
+        thrown.expect(hasProperty("accountNumber", is("00000000")));
+        thrown.expect(hasProperty("sortCode", is("000000")));
 
         new AccountsImpl(new JdbcSession(dataSource)).update(new Account("00000000", "000000", new Money("100")));
     }

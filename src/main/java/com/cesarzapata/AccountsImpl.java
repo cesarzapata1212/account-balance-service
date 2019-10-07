@@ -9,6 +9,7 @@ import static java.util.Objects.requireNonNull;
 
 public class AccountsImpl implements Accounts {
 
+    private static final String SERIALIZATION_FAILURE = "40001";
     private JdbcSession session;
 
     public AccountsImpl(@NotNull JdbcSession session) {
@@ -41,7 +42,18 @@ public class AccountsImpl implements Accounts {
                     .set(a.sortCode())
                     .update(new UpdateOutcome());
         } catch (SQLException e) {
+            if (isSerializationFailure(e)) {
+                throw new ConcurrentAccountUpdateException("Concurrent update to account failed", e);
+            }
             throw new AccountNotFoundException(a.accountNumber(), a.sortCode(), e);
         }
+    }
+
+    private boolean isSerializationFailure(SQLException e) {
+        if (e.getCause() instanceof SQLException) {
+            SQLException cause = (SQLException) e.getCause();
+            return SERIALIZATION_FAILURE.equals(cause.getSQLState());
+        }
+        return false;
     }
 }

@@ -1,8 +1,7 @@
 package com.cesarzapata;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.cesarzapata.support.TestContext;
 import com.jcabi.jdbc.JdbcSession;
-import io.javalin.http.Context;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -10,21 +9,10 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import javax.servlet.ReadListener;
-import javax.servlet.ServletInputStream;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.sql.DataSource;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.math.BigDecimal;
-import java.util.HashMap;
-
-import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class BalanceTransferHandlerTest {
@@ -47,116 +35,72 @@ public class BalanceTransferHandlerTest {
     }
 
     @Test
-    public void validate_source_account() throws Exception {
+    public void validate_source_account() {
         payload.setSourceAccount(null);
 
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("Invalid sourceAccount provided");
 
-        balanceTransferHandler.handle(context(), new JdbcSession(dataSource));
+        balanceTransferHandler.handle(new TestContext(payload).create(), new JdbcSession(dataSource));
     }
 
     @Test
-    public void validate_source_account_number() throws Exception {
+    public void validate_source_account_number() {
         payload.getSourceAccount().setAccountNumber("");
 
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("Invalid sourceAccount.accountNumber provided");
 
-        balanceTransferHandler.handle(context(), new JdbcSession(dataSource));
+        balanceTransferHandler.handle(new TestContext(payload).create(), new JdbcSession(dataSource));
     }
 
     @Test
-    public void validate_source_account_sort_code() throws Exception {
+    public void validate_source_account_sort_code() {
         payload.getSourceAccount().setSortCode("");
 
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("Invalid sourceAccount.sortCode provided");
 
-        balanceTransferHandler.handle(context(), new JdbcSession(dataSource));
+        balanceTransferHandler.handle(new TestContext(payload).create(), new JdbcSession(dataSource));
     }
 
     @Test
-    public void validate_destination_account() throws Exception {
+    public void validate_destination_account() {
         payload.setDestinationAccount(null);
 
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("Invalid destinationAccount provided");
 
-        balanceTransferHandler.handle(context(), new JdbcSession(dataSource));
+        balanceTransferHandler.handle(new TestContext(payload).create(), new JdbcSession(dataSource));
     }
 
     @Test
-    public void validate_destination_account_number() throws Exception {
+    public void validate_destination_account_number() {
         payload.getDestinationAccount().setAccountNumber("");
 
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("Invalid destinationAccount.accountNumber provided");
 
-        balanceTransferHandler.handle(context(), new JdbcSession(dataSource));
+        balanceTransferHandler.handle(new TestContext(payload).create(), new JdbcSession(dataSource));
     }
 
     @Test
-    public void validate_destination_account_sort_code() throws Exception {
+    public void validate_destination_account_sort_code() {
         payload.getDestinationAccount().setSortCode("");
 
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("Invalid destinationAccount.sortCode provided");
 
-        balanceTransferHandler.handle(context(), new JdbcSession(dataSource));
+        balanceTransferHandler.handle(new TestContext(payload).create(), new JdbcSession(dataSource));
     }
 
     @Test
-    public void validate_amount() throws Exception {
+    public void validate_amount() {
         payload.setAmount(null);
 
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("Invalid amount provided");
 
-        balanceTransferHandler.handle(context(), new JdbcSession(dataSource));
-    }
-
-    private Context context() throws Exception {
-        HttpServletRequest req = mockServletPayload();
-        HttpServletResponse res = Mockito.mock(HttpServletResponse.class);
-        return new Context(req, res, new HashMap<>());
-    }
-
-    private HttpServletRequest mockServletPayload() throws Exception {
-        HttpServletRequest result = Mockito.mock(HttpServletRequest.class);
-
-        byte[] bytes = new ObjectMapper().writeValueAsString(payload).getBytes();
-        InputStream is = new ByteArrayInputStream(bytes);
-        when(result.getInputStream()).thenReturn(new MockServletInputStream(is));
-
-        return result;
-    }
-
-    class MockServletInputStream extends ServletInputStream {
-        private InputStream inputStream;
-
-        public MockServletInputStream(InputStream is) {
-            inputStream = is;
-        }
-
-        @Override
-        public boolean isFinished() {
-            return false;
-        }
-
-        @Override
-        public boolean isReady() {
-            return false;
-        }
-
-        @Override
-        public void setReadListener(ReadListener readListener) {
-
-        }
-
-        @Override
-        public int read() throws IOException {
-            return inputStream.read();
-        }
+        balanceTransferHandler.handle(new TestContext(payload).create(), new JdbcSession(dataSource));
     }
 }

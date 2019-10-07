@@ -1,44 +1,39 @@
 package com.cesarzapata.concurrency;
 
+import com.cesarzapata.Account;
+import com.cesarzapata.AccountsImpl;
 import com.cesarzapata.BalanceTransferHandler;
 import com.cesarzapata.BalanceTransferRequest;
+import com.cesarzapata.ConcurrentAccountUpdateException;
+import com.cesarzapata.Money;
 import com.cesarzapata.TransactionalHandlerImpl;
 import com.cesarzapata.support.AccountBalanceRepository;
 import com.cesarzapata.support.AccountRepository;
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.PropertyAccessor;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.cesarzapata.support.TestContext;
 import com.jcabi.jdbc.JdbcSession;
 import com.opentable.db.postgres.embedded.FlywayPreparer;
 import com.opentable.db.postgres.junit.EmbeddedPostgresRules;
 import com.opentable.db.postgres.junit.PreparedDbRule;
-import io.javalin.http.Context;
-import io.javalin.plugin.json.JavalinJackson;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.mockito.Mockito;
+import org.junit.rules.ExpectedException;
 
-import javax.servlet.ReadListener;
-import javax.servlet.ServletInputStream;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.math.BigDecimal;
-import java.util.HashMap;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
-import static org.mockito.Mockito.when;
 
 public class ConcurrentBalanceTransferTest {
-
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
     @Rule
     public PreparedDbRule db = EmbeddedPostgresRules.preparedDatabase(FlywayPreparer.forClasspathLocation("database"));
     private AccountRepository accountRepository;
@@ -61,22 +56,22 @@ public class ConcurrentBalanceTransferTest {
         // When concurrent transactions execute
         JdbcSession transaction1 = new JdbcSession(db.getTestDatabase()).autocommit(false).sql("BEGIN TRANSACTION").execute();
         new BalanceTransferHandler().handle(
-                context(new BalanceTransferRequest(
+                new TestContext(new BalanceTransferRequest(
                         new BalanceTransferRequest.Account("11110000", "111000"),
                         new BalanceTransferRequest.Account("22220000", "222000"),
                         new BigDecimal("800")
-                )), transaction1);
+                )).create(), transaction1);
 
         ExecutorService executorService = Executors.newSingleThreadExecutor();
         executorService.execute(() -> {
             try {
                 TransactionalHandlerImpl transaction2 = new TransactionalHandlerImpl(db.getTestDatabase(), new BalanceTransferHandler());
                 transaction2.handle(
-                        context(new BalanceTransferRequest(
+                        new TestContext(new BalanceTransferRequest(
                                 new BalanceTransferRequest.Account("11110000", "111000"),
                                 new BalanceTransferRequest.Account("22220000", "222000"),
                                 new BigDecimal("500")
-                        )));
+                        )).create());
             } catch (Exception e) {
             }
         });
@@ -88,56 +83,36 @@ public class ConcurrentBalanceTransferTest {
         assertThat(balanceRepository.selectBalance("22220000", "222000"), equalTo("800.00"));
     }
 
+    @Test
+    public void repository_should_throw_concurrent_update_error() throws Throwable {
+        // Given
+        accountRepository.insert("00001111", "000111");
+        balanceRepository.insert("00001111", "000111", BigDecimal.ZERO);
 
-    private Context context(Object payload) {
-        HttpServletRequest req = mockServletPayload(payload);
-        HttpServletResponse res = Mockito.mock(HttpServletResponse.class);
-        Context context = new Context(req, res, new HashMap<>());
-        ObjectMapper objectMapper = new ObjectMapper().setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
-        JavalinJackson.configure(objectMapper);
-        return context;
-    }
+        // When
+        JdbcSession transaction1 = new JdbcSession(db.getTestDatabase()).autocommit(false).sql("SET TRANSACTION ISOLATION LEVEL SERIALIZABLE").execute();
+        new AccountsImpl(transaction1).update(new Account("00001111", "000111", new Money("100")));
 
-    private HttpServletRequest mockServletPayload(Object payload) {
-        HttpServletRequest result = Mockito.mock(HttpServletRequest.class);
-        ObjectMapper objectMapper = new ObjectMapper().setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
-        byte[] bytes;
+        Callable<Object> transaction2 = () -> {
+            JdbcSession transaction = new JdbcSession(db.getTestDatabase()).autocommit(false).sql("SET TRANSACTION ISOLATION LEVEL SERIALIZABLE").execute();
+            new AccountsImpl(transaction).update(new Account("00001111", "000111", new Money("200")));
+            transaction.commit();
+            return null;
+        };
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Future expected = executor.submit(transaction2);
+        executor.awaitTermination(1, TimeUnit.SECONDS);
+
+        transaction1.commit();
+
+        // Then
+        thrown.expect(ConcurrentAccountUpdateException.class);
+        thrown.expectMessage("Concurrent update to account failed");
         try {
-            bytes = objectMapper.writeValueAsString(payload).getBytes();
-            InputStream is = new ByteArrayInputStream(bytes);
-            when(result.getInputStream()).thenReturn(new MockServletInputStream(is));
-        } catch (IOException e) {
-            fail(e.getMessage());
-        }
-
-        return result;
-    }
-
-    class MockServletInputStream extends ServletInputStream {
-        private InputStream inputStream;
-
-        public MockServletInputStream(InputStream is) {
-            inputStream = is;
-        }
-
-        @Override
-        public boolean isFinished() {
-            return false;
-        }
-
-        @Override
-        public boolean isReady() {
-            return false;
-        }
-
-        @Override
-        public void setReadListener(ReadListener readListener) {
-
-        }
-
-        @Override
-        public int read() throws IOException {
-            return inputStream.read();
+            expected.get();
+            fail();
+        } catch (ExecutionException e) {
+            throw e.getCause();
         }
     }
 }

@@ -1,6 +1,5 @@
 package com.cesarzapata.common;
 
-import com.cesarzapata.core.BusinessOperationException;
 import com.cesarzapata.support.AccountRepository;
 import com.jcabi.jdbc.JdbcSession;
 import com.jcabi.jdbc.Outcome;
@@ -8,6 +7,7 @@ import com.opentable.db.postgres.embedded.FlywayPreparer;
 import com.opentable.db.postgres.junit.EmbeddedPostgresRules;
 import com.opentable.db.postgres.junit.PreparedDbRule;
 import io.javalin.http.Context;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -28,59 +28,59 @@ import static org.mockito.Mockito.when;
 public class TransactionalHandlerImplTest {
     @Rule
     public PreparedDbRule db = EmbeddedPostgresRules.preparedDatabase(FlywayPreparer.forClasspathLocation("database"));
+    private AccountRepository accountRepository;
+
+    @Before
+    public void setUp() {
+        accountRepository = new AccountRepository(db.getTestDatabase());
+    }
 
     @Test
     public void should_rollback_and_rethrow_when_handler_fails() throws Exception {
         TransactionalHandler handler = (ctx, session) -> {
-            try {
-                insertAccount(session);
-                throw new BusinessOperationException("Insert should be rolled back");
-            } catch (SQLException e) {
-                fail();
-            }
+            insertAccount(session);
+            throw new RuntimeException("Insert should be rolled back");
         };
 
         try {
             new TransactionalHandlerImpl(db.getTestDatabase(), handler).handle(context());
-        } catch (BusinessOperationException e) {
+        } catch (RuntimeException e) {
             assertThat(e.getMessage(), equalTo("Insert should be rolled back"));
         }
 
-        assertThat(new AccountRepository(db.getTestDatabase()).exists("111", "111"), is(false));
+        assertThat(accountRepository.exists("111", "111"), is(false));
     }
 
     @Test
     public void should_commit_transaction_when_no_errors_are_thrown() throws Exception {
-        TransactionalHandler handler = (ctx, session) -> {
-            try {
-                insertAccount(session);
-            } catch (SQLException e) {
-                fail();
-            }
-        };
+        TransactionalHandler handler = (ctx, session) -> insertAccount(session);
 
         new TransactionalHandlerImpl(db.getTestDatabase(), handler).handle(context());
 
-        assertThat(new AccountRepository(db.getTestDatabase()).exists("111", "111"), is(true));
+        assertThat(accountRepository.exists("111", "111"), is(true));
     }
 
     @Test
     public void fail_to_connect_to_database() throws Exception {
         TransactionalHandler handler = mock(TransactionalHandler.class);
         DataSource dataSource = mock(DataSource.class);
-        when(dataSource.getConnection()).thenThrow(new SQLException("Connection cannot be open"));
+        when(dataSource.getConnection()).thenThrow(new SQLException("Connection cannot be opened"));
 
         try {
             new TransactionalHandlerImpl(dataSource, handler).handle(context());
             fail();
         } catch (SQLException expected) {
-            assertThat(expected.getMessage(), equalTo("Connection cannot be open"));
+            assertThat(expected.getMessage(), equalTo("Connection cannot be opened"));
         }
     }
 
-    private void insertAccount(JdbcSession session) throws SQLException {
-        Long id = session.sql("INSERT INTO account VALUES('111', '111')").insert(Outcome.LAST_INSERT_ID);
-        assertTrue(id > 0L);
+    private void insertAccount(JdbcSession session) {
+        try {
+            Long id = session.sql("INSERT INTO account VALUES('111', '111')").insert(Outcome.LAST_INSERT_ID);
+            assertTrue(id > 0L);
+        } catch (SQLException e) {
+            fail();
+        }
     }
 
     private Context context() {

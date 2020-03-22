@@ -1,16 +1,17 @@
 package com.cesarzapata.core;
 
+import static java.util.Objects.requireNonNull;
+
+import java.math.BigDecimal;
+import java.sql.SQLException;
+
 import com.cesarzapata.common.UpdateOutcome;
 import com.jcabi.jdbc.JdbcSession;
 import org.jetbrains.annotations.NotNull;
 
-import java.sql.SQLException;
-
-import static java.util.Objects.requireNonNull;
-
 public class AccountsImpl implements Accounts {
 
-    private static final String SERIALIZATION_FAILURE = "40001";
+    private static final String ZERO_ROWS_AFFECTED_ERROR = "Invalid update statement. 0 records updated.";
     private JdbcSession session;
 
     public AccountsImpl(@NotNull JdbcSession session) {
@@ -34,26 +35,28 @@ public class AccountsImpl implements Accounts {
     }
 
     @Override
-    public void update(Account account) {
+    public void update(Account account, final BigDecimal previousBalance) {
         Account a = find(account.accountNumber(), account.sortCode());
         try {
-            session.sql("UPDATE account_balance SET available_balance = ? WHERE account_number = ? AND sort_code = ?")
+            session.sql("UPDATE account_balance SET available_balance = ? " +
+                    "WHERE account_number = ? AND sort_code = ? AND available_balance = ?")
                     .set(account.balance().value())
                     .set(a.accountNumber())
                     .set(a.sortCode())
+                    .set(previousBalance)
                     .update(new UpdateOutcome());
         } catch (SQLException e) {
-            if (isSerializationFailure(e)) {
+            if (isZeroRowsAffectedError(e)) {
                 throw new ConcurrentAccountUpdateException("Concurrent update to account failed", e);
             }
             throw new AccountNotFoundException(a.accountNumber(), a.sortCode(), e);
         }
     }
 
-    private boolean isSerializationFailure(SQLException e) {
+    private boolean isZeroRowsAffectedError(SQLException e) {
         if (e.getCause() instanceof SQLException) {
             SQLException cause = (SQLException) e.getCause();
-            return SERIALIZATION_FAILURE.equals(cause.getSQLState());
+            return ZERO_ROWS_AFFECTED_ERROR.equals(cause.getMessage());
         }
         return false;
     }

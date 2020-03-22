@@ -49,6 +49,6 @@ public class TransactionalHandlerImpl implements Handler {
     private JdbcSession beginTransaction() throws SQLException {
         return new JdbcSession(dataSource)
                 .autocommit(false)
-                .sql("BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE").execute();
+                .sql("BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED").execute();
     }
 }

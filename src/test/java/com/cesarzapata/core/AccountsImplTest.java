@@ -1,5 +1,15 @@
 package com.cesarzapata.core;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.beans.HasPropertyWithValue.hasProperty;
+import static org.junit.Assert.assertThat;
+
+import java.math.BigDecimal;
+import java.sql.SQLException;
+
+import javax.sql.DataSource;
+
 import com.cesarzapata.support.AccountBalanceRepository;
 import com.cesarzapata.support.AccountRepository;
 import com.jcabi.jdbc.JdbcSession;
@@ -10,15 +20,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-
-import javax.sql.DataSource;
-import java.math.BigDecimal;
-import java.sql.SQLException;
-
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.beans.HasPropertyWithValue.hasProperty;
-import static org.junit.Assert.assertThat;
 
 public class AccountsImplTest {
     @Rule
@@ -71,9 +72,20 @@ public class AccountsImplTest {
         accountRepository.insert("00001111", "000111");
         accountBalanceRepository.insert("00001111", "000111", BigDecimal.ZERO);
 
-        new AccountsImpl(new JdbcSession(dataSource)).update(new Account("00001111", "000111", new Money("100")));
+        new AccountsImpl(new JdbcSession(dataSource)).update(new Account("00001111", "000111", new Money("100")), BigDecimal.ZERO);
 
         assertThat(accountBalanceRepository.selectBalance("00001111", "000111"), equalTo("100.00"));
+    }
+
+    @Test
+    public void should_fail_update_when_previous_balance_is_incorrect() throws SQLException {
+        thrown.expect(ConcurrentAccountUpdateException.class);
+        thrown.expectMessage("Concurrent update to account failed");
+
+        accountRepository.insert("00001111", "000111");
+        accountBalanceRepository.insert("00001111", "000111", new BigDecimal("1000"));
+
+        new AccountsImpl(new JdbcSession(dataSource)).update(new Account("00001111", "000111", new Money("100")), BigDecimal.ZERO);
     }
 
     @Test
@@ -83,6 +95,6 @@ public class AccountsImplTest {
         thrown.expect(hasProperty("accountNumber", is("00000000")));
         thrown.expect(hasProperty("sortCode", is("000000")));
 
-        new AccountsImpl(new JdbcSession(dataSource)).update(new Account("00000000", "000000", new Money("100")));
+        new AccountsImpl(new JdbcSession(dataSource)).update(new Account("00000000", "000000", new Money("100")), BigDecimal.ZERO);
     }
 }

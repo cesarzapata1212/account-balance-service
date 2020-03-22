@@ -1,10 +1,10 @@
 package com.cesarzapata.core;
 
+import java.math.BigDecimal;
+
 import com.cesarzapata.BalanceTransferRequest;
 import com.cesarzapata.BalanceTransferResult;
 import org.jetbrains.annotations.NotNull;
-
-import java.math.BigDecimal;
 
 public class BalanceTransfer {
     private final Accounts accounts;
@@ -30,8 +30,8 @@ public class BalanceTransfer {
                 destinationAccount.balance(destinationAccount.balance().plus(amount))
         );
 
-        accounts.update(result.sourceAccount());
-        accounts.update(result.destinationAccount());
+        accounts.update(result.sourceAccount(), sourceAccount.balance().value());
+        accounts.update(result.destinationAccount(), destinationAccount.balance().value());
 
         transactions.add(new DirectPaymentTransaction(sourceAccount.accountNumber(), sourceAccount.sortCode(), amount));
         transactions.add(new DirectDepositTransaction(destinationAccount.accountNumber(), destinationAccount.sortCode(), amount));

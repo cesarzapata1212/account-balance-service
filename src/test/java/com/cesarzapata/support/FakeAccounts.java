@@ -1,11 +1,12 @@
 package com.cesarzapata.support;
 
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import com.cesarzapata.core.Account;
 import com.cesarzapata.core.AccountNotFoundException;
 import com.cesarzapata.core.Accounts;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 public class FakeAccounts implements Accounts {
 
@@ -24,10 +25,11 @@ public class FakeAccounts implements Accounts {
     }
 
     @Override
-    public void update(Account account) {
+    public void update(Account account, final BigDecimal previousBalance) {
         accounts = accounts.stream().map(existingAccount ->
                 existingAccount.accountNumber().equals(account.accountNumber()) &&
-                        existingAccount.sortCode().equals(account.sortCode())
+                        existingAccount.sortCode().equals(account.sortCode()) &&
+                        previousBalance.compareTo(existingAccount.balance().value()) == 0
                         ? account
                         : existingAccount
         ).collect(Collectors.toList());

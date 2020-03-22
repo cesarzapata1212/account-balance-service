@@ -1,6 +1,5 @@
 package com.cesarzapata;
 
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Properties;
 
@@ -13,7 +12,7 @@ import org.postgresql.ds.PGSimpleDataSource;
 
 public class Main {
 
-    public static void main(String[] args) throws SQLException, IOException {
+    public static void main(String[] args) throws SQLException {
         Javalin server = Javalin.create().start();
         DataSource dataSource = getDataSource();
 
@@ -23,7 +22,7 @@ public class Main {
     }
 
     @NotNull
-    private static PGSimpleDataSource getDataSource() throws IOException {
+    private static PGSimpleDataSource getDataSource() {
         Properties properties = new SystemProperties().load();
         return PostgresDataSourceFactory.fromProperties(properties);
     }
